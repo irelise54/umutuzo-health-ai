@@ -11,6 +11,7 @@ import {
   BarChart3,
   ArrowRight,
 } from "lucide-react";
+import heroIllustration from "@/assets/hero-illustration.png";
 
 const Index = () => {
   const features = [
@@ -52,7 +53,14 @@ const Index = () => {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 gradient-hero" />
+        <div className="absolute inset-0">
+          <img 
+            src={heroIllustration} 
+            alt="Health and wellness illustration" 
+            className="w-full h-full object-cover opacity-60"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/60 to-background" />
+        </div>
         <div className="container relative py-20 md:py-32">
           <div className="mx-auto max-w-4xl text-center animate-fade-in">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-sm">
