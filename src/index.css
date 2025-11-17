@@ -8,52 +8,52 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Apple-inspired Umutuzo Design System */
-    --background: 210 20% 98%;
-    --foreground: 217 19% 17%;
+    /* Umutuzo Health-First Design System */
+    --background: 40 33% 98%;
+    --foreground: 0 0% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 217 19% 17%;
+    --card-foreground: 0 0% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 217 19% 17%;
+    --popover-foreground: 0 0% 11%;
 
-    /* Umutuzo Blue - Primary brand color */
-    --primary: 217 91% 60%;
-    --primary-foreground: 0 0% 100%;
+    /* Soft Mint Green - Primary brand color */
+    --primary: 131 48% 82%;
+    --primary-foreground: 0 0% 11%;
 
-    /* Calm Teal - Secondary accent */
-    --secondary: 173 80% 40%;
-    --secondary-foreground: 0 0% 100%;
+    /* Light Seafoam Green - Secondary accent */
+    --secondary: 133 63% 82%;
+    --secondary-foreground: 0 0% 11%;
 
-    --muted: 210 20% 96%;
-    --muted-foreground: 217 19% 45%;
+    --muted: 43 29% 96%;
+    --muted-foreground: 100 9% 38%;
 
-    /* Trust Green - Success/Health accent */
-    --accent: 142 71% 45%;
-    --accent-foreground: 0 0% 100%;
+    /* Soft Sky Blue - Accent */
+    --accent: 211 65% 74%;
+    --accent-foreground: 0 0% 11%;
 
-    /* Apple Alert Red */
+    /* Alert Red */
     --destructive: 4 100% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    /* iOS Silver borders */
-    --border: 220 13% 84%;
-    --input: 220 13% 91%;
-    --ring: 217 91% 60%;
+    /* Calm borders */
+    --border: 100 9% 85%;
+    --input: 43 29% 96%;
+    --ring: 131 48% 82%;
 
     --radius: 1rem;
 
-    /* Apple-style gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(173 80% 40%) 100%);
-    --gradient-secondary: linear-gradient(180deg, hsl(210 20% 98%) 0%, hsl(220 13% 91%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(217 91% 60% / 0.1) 0%, hsl(173 80% 40% / 0.1) 100%);
+    /* Health-first gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(133 63% 82%) 0%, hsl(211 65% 74%) 100%);
+    --gradient-secondary: linear-gradient(180deg, hsl(40 33% 98%) 0%, hsl(43 29% 96%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(133 63% 82% / 0.1) 0%, hsl(211 65% 74% / 0.1) 100%);
 
-    /* Premium shadows */
-    --shadow-soft: 0 1px 3px 0 hsl(217 19% 17% / 0.1), 0 1px 2px -1px hsl(217 19% 17% / 0.1);
-    --shadow-medium: 0 4px 6px -1px hsl(217 19% 17% / 0.1), 0 2px 4px -2px hsl(217 19% 17% / 0.1);
-    --shadow-large: 0 10px 15px -3px hsl(217 19% 17% / 0.1), 0 4px 6px -4px hsl(217 19% 17% / 0.1);
-    --shadow-glow: 0 0 40px hsl(217 91% 60% / 0.3);
+    /* Soft shadows */
+    --shadow-soft: 0 1px 3px 0 hsl(0 0% 11% / 0.08), 0 1px 2px -1px hsl(0 0% 11% / 0.08);
+    --shadow-medium: 0 4px 6px -1px hsl(0 0% 11% / 0.08), 0 2px 4px -2px hsl(0 0% 11% / 0.08);
+    --shadow-large: 0 10px 15px -3px hsl(0 0% 11% / 0.1), 0 4px 6px -4px hsl(0 0% 11% / 0.1);
+    --shadow-glow: 0 0 40px hsl(131 48% 82% / 0.3);
 
     /* Smooth transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -61,33 +61,33 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 217 19% 12%;
-    --foreground: 210 20% 98%;
+    --background: 0 0% 11%;
+    --foreground: 40 33% 98%;
 
-    --card: 217 19% 15%;
-    --card-foreground: 210 20% 98%;
+    --card: 0 0% 15%;
+    --card-foreground: 40 33% 98%;
 
-    --popover: 217 19% 15%;
-    --popover-foreground: 210 20% 98%;
+    --popover: 0 0% 15%;
+    --popover-foreground: 40 33% 98%;
 
-    --primary: 217 91% 60%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 131 48% 82%;
+    --primary-foreground: 0 0% 11%;
 
-    --secondary: 173 80% 40%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 133 63% 82%;
+    --secondary-foreground: 0 0% 11%;
 
-    --muted: 217 19% 20%;
-    --muted-foreground: 210 20% 70%;
+    --muted: 0 0% 20%;
+    --muted-foreground: 40 33% 70%;
 
-    --accent: 142 71% 45%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 211 65% 74%;
+    --accent-foreground: 0 0% 11%;
 
     --destructive: 4 100% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 217 19% 25%;
-    --input: 217 19% 20%;
-    --ring: 217 91% 60%;
+    --border: 0 0% 25%;
+    --input: 0 0% 20%;
+    --ring: 131 48% 82%;
 
     --shadow-soft: 0 1px 3px 0 hsl(0 0% 0% / 0.3);
     --shadow-medium: 0 4px 6px -1px hsl(0 0% 0% / 0.4);

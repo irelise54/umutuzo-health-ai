@@ -47,6 +47,16 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        umutuzo: {
+          primary: "#BEE7C5",
+          primaryText: "#1C1C1C",
+          gradientStart: "#B6EEC0",
+          gradientEnd: "#92BDEB",
+          input: "#F8F6F1",
+          background: "#FAF9F7",
+          textMuted: "#5E6758",
+          black: "#000000",
+        },
       },
       fontFamily: {
         sans: [
