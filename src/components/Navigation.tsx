@@ -2,9 +2,12 @@ import { Link, useLocation } from "react-router-dom";
 import { Activity, LayoutDashboard, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Navigation = () => {
   const location = useLocation();
+  const { t } = useLanguage();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -26,7 +29,7 @@ const Navigation = () => {
               )}
             >
               <Stethoscope className="h-4 w-4" />
-              <span className="hidden sm:inline">Symptom Checker</span>
+              <span className="hidden sm:inline">{t("nav.symptomChecker")}</span>
             </Button>
           </Link>
           <Link to="/dashboard">
@@ -38,9 +41,10 @@ const Navigation = () => {
               )}
             >
               <LayoutDashboard className="h-4 w-4" />
-              <span className="hidden sm:inline">Dashboard</span>
+              <span className="hidden sm:inline">{t("nav.dashboard")}</span>
             </Button>
           </Link>
+          <LanguageSwitcher />
         </div>
       </div>
     </nav>
