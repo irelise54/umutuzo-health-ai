@@ -42,6 +42,7 @@ const SymptomChecker = () => {
   const { t, language } = useLanguage();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   // Comprehensive Symptom Categories with translations
   const symptomCategories = {
@@ -125,10 +126,31 @@ const SymptomChecker = () => {
     }
   };
 
-  // Auto-scroll to bottom of conversation
+  // Enhanced auto-scroll to bottom of conversation
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const scrollToBottom = () => {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ 
+          behavior: "smooth",
+          block: "end"
+        });
+      }, 100);
+    };
+
+    scrollToBottom();
   }, [conversation]);
+
+  // Scroll when analysis starts
+  useEffect(() => {
+    if (isAnalyzing) {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ 
+          behavior: "smooth",
+          block: "end"
+        });
+      }, 150);
+    }
+  }, [isAnalyzing]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -154,6 +176,7 @@ const SymptomChecker = () => {
     setIsAnalyzing(true);
     const userMessage = { type: "user", content: symptoms, timestamp: new Date() };
     setConversation(prev => [...prev, userMessage]);
+    setSymptoms(""); // Clear input immediately for better UX
 
     try {
       const response = await fetch("https://umutuzo-server-1.onrender.com/api/ai/symptoms", {
@@ -183,7 +206,6 @@ const SymptomChecker = () => {
         timestamp: new Date() 
       };
       setConversation(prev => [...prev, aiMessage]);
-      setSymptoms("");
 
       toast({
         title: language === "rw" ? "Gusuzuma Byarakozwe" : 
@@ -374,10 +396,13 @@ const SymptomChecker = () => {
                 
                 <CardContent className="p-6">
                   {/* Conversation Area */}
-                  <ScrollArea className={cn(
-                    "rounded-2xl border border-slate-200 bg-white/50 p-4 transition-all duration-300",
-                    isExpanded ? "h-96" : "h-80"
-                  )}>
+                  <ScrollArea 
+                    ref={scrollAreaRef}
+                    className={cn(
+                      "rounded-2xl border border-slate-200 bg-white/50 p-4 transition-all duration-300",
+                      isExpanded ? "h-96" : "h-80"
+                    )}
+                  >
                     {conversation.length === 0 ? (
                       <div className="flex h-full flex-col items-center justify-center text-slate-500 text-center p-8">
                         <div className="mb-4 p-4 bg-slate-100 rounded-2xl">
@@ -417,6 +442,12 @@ const SymptomChecker = () => {
                                 {language === "rw" ? "Bishobora gutora iminsi mike" : 
                                  language === "fr" ? "Cela peut prendre quelques instants" : "This may take a few moments"}
                               </p>
+                            </div>
+                            {/* Enhanced typing indicator */}
+                            <div className="flex space-x-1">
+                              <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
+                              <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                              <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
                             </div>
                           </div>
                         )}
