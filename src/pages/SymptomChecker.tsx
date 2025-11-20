@@ -288,20 +288,20 @@ const SymptomChecker = () => {
       type === 'user' ? 'justify-end' : 'justify-start'
     )}>
       {type === 'ai' && (
-        <div className="flex flex-shrink-0 h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg">
-          <Bot className="h-5 w-5 text-white" />
+        <div className="flex flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg">
+          <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
         </div>
       )}
       
       <div className={cn(
-        "max-w-[85%] rounded-3xl px-5 py-4 shadow-sm transition-all duration-200 hover:shadow-md",
+        "max-w-[85%] rounded-3xl px-4 py-3 sm:px-5 sm:py-4 shadow-sm transition-all duration-200 hover:shadow-md",
         type === 'user' 
           ? 'bg-gradient-to-br from-primary to-primary/90 text-primary-foreground rounded-br-md' 
           : content.includes('🚨') 
             ? 'bg-gradient-to-br from-red-50 to-orange-50 border-2 border-red-200 rounded-bl-md'
             : 'bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-bl-md'
       )}>
-        <p className="text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
+        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{content}</p>
         <div className={cn(
           "text-xs mt-2 flex items-center gap-1",
           type === 'user' ? 'text-primary-foreground/70' : 'text-slate-500'
@@ -312,8 +312,8 @@ const SymptomChecker = () => {
       </div>
       
       {type === 'user' && (
-        <div className="flex flex-shrink-0 h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg">
-          <User className="h-5 w-5 text-white" />
+        <div className="flex flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg">
+          <User className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
         </div>
       )}
     </div>
@@ -323,60 +323,60 @@ const SymptomChecker = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30">
       <Navigation />
       
-      <main className="container py-8 px-4 sm:px-6">
+      <main className="container py-4 sm:py-8 px-3 sm:px-6">
         <div className="mx-auto max-w-6xl">
-          {/* Enhanced Header */}
-          <div className="mb-12 text-center animate-fade-in">
-            <div className="mb-6 flex justify-center">
+          {/* Enhanced Header - Mobile Responsive */}
+          <div className="mb-6 sm:mb-12 text-center animate-fade-in">
+            <div className="mb-4 sm:mb-6 flex justify-center">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full blur-lg opacity-30 animate-pulse"></div>
-                <div className="relative bg-gradient-to-br from-white to-slate-100 p-6 rounded-3xl shadow-2xl border border-slate-200">
-                  <Heart className="h-16 w-16 text-primary animate-heartbeat" />
-                  <Brain className="h-8 w-8 text-primary absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+                <div className="relative bg-gradient-to-br from-white to-slate-100 p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-xl sm:shadow-2xl border border-slate-200">
+                  <Heart className="h-12 w-12 sm:h-16 sm:w-16 text-primary animate-heartbeat" />
+                  <Brain className="h-6 w-6 sm:h-8 sm:w-8 text-primary absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
                 </div>
               </div>
             </div>
-            <h1 className="mb-4 text-5xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent tracking-tight">
+            <h1 className="mb-3 sm:mb-4 text-2xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent tracking-tight px-2">
               {language === "rw" ? "Umufasha w'Ubuzima w'Ubwenge n'Umutima" : 
                language === "fr" ? "Assistant Santé Mentale et Cardiaque IA" : "Mental & Heart Health AI Assistant"}
             </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            <p className="text-sm sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4">
               {language === "rw" ? "Umufasha wawe w'ubwenge w'impuhwe wo gusobanukirwa ibimenyetso by'umutima, ubwenge n'umubiri" :
                language === "fr" ? "Votre partenaire IA compatissant pour comprendre les symptômes émotionnels, mentaux et physiques" : 
                "Your compassionate AI partner for understanding emotional, mental, and physical symptoms"}
             </p>
           </div>
 
-          {/* Main Layout */}
-          <div className="grid gap-8 lg:grid-cols-3">
-            {/* Chat Section - Takes 2/3 on large screens */}
+          {/* Main Layout - Mobile Responsive */}
+          <div className="grid gap-6 lg:grid-cols-3">
+            {/* Chat Section - Takes full width on mobile, 2/3 on large screens */}
             <div className="lg:col-span-2 space-y-6">
-              <Card className="shadow-2xl border-0 bg-white/80 backdrop-blur-sm rounded-3xl overflow-hidden">
-                <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100/80 border-b border-slate-200/60 pb-4">
-                  <div className="flex items-center justify-between">
+              <Card className="shadow-xl sm:shadow-2xl border-0 bg-white/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl overflow-hidden">
+                <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100/80 border-b border-slate-200/60 pb-3 sm:pb-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-primary/10 rounded-2xl">
-                        <MessageCircle className="h-6 w-6 text-primary" />
+                      <div className="p-2 bg-primary/10 rounded-xl sm:rounded-2xl">
+                        <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                       </div>
                       <div>
-                        <CardTitle className="text-2xl font-bold text-slate-800">
+                        <CardTitle className="text-lg sm:text-2xl font-bold text-slate-800">
                           {language === "rw" ? "Ikiganiro cy'Ubuzima" : 
                            language === "fr" ? "Conversation Santé" : "Health Conversation"}
                         </CardTitle>
-                        <p className="text-sm text-slate-600 mt-1">
+                        <p className="text-xs sm:text-sm text-slate-600 mt-1">
                           {conversation.length} {language === "rw" ? "ubutumwa" : language === "fr" ? "messages" : "messages"} • {language === "rw" ? "Isesengura ryuzuye rya AI" : language === "fr" ? "Analyse holistique IA" : "Holistic AI analysis"}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 self-end sm:self-auto">
                       {conversation.length > 0 && (
                         <Button 
                           variant="outline" 
                           size="sm" 
                           onClick={clearConversation}
-                          className="rounded-full border-slate-300 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all duration-200"
+                          className="rounded-full border-slate-300 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all duration-200 text-xs"
                         >
-                          <Trash2 className="h-4 w-4 mr-2" />
+                          <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                           {language === "rw" ? "Siba" : language === "fr" ? "Effacer" : "Clear"}
                         </Button>
                       )}
@@ -384,7 +384,7 @@ const SymptomChecker = () => {
                         variant="outline" 
                         size="sm"
                         onClick={() => setIsExpanded(!isExpanded)}
-                        className="rounded-full border-slate-300 transition-all duration-200"
+                        className="rounded-full border-slate-300 transition-all duration-200 text-xs"
                       >
                         {isExpanded ? 
                           (language === "rw" ? "Gutumba" : language === "fr" ? "Réduire" : "Collapse") : 
@@ -394,25 +394,25 @@ const SymptomChecker = () => {
                   </div>
                 </CardHeader>
                 
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   {/* Conversation Area */}
                   <ScrollArea 
                     ref={scrollAreaRef}
                     className={cn(
-                      "rounded-2xl border border-slate-200 bg-white/50 p-4 transition-all duration-300",
-                      isExpanded ? "h-96" : "h-80"
+                      "rounded-xl sm:rounded-2xl border border-slate-200 bg-white/50 p-3 sm:p-4 transition-all duration-300",
+                      isExpanded ? "h-64 sm:h-96" : "h-48 sm:h-80"
                     )}
                   >
                     {conversation.length === 0 ? (
-                      <div className="flex h-full flex-col items-center justify-center text-slate-500 text-center p-8">
-                        <div className="mb-4 p-4 bg-slate-100 rounded-2xl">
-                          <HeartPulse className="h-12 w-12 text-slate-400 mx-auto mb-3" />
+                      <div className="flex h-full flex-col items-center justify-center text-slate-500 text-center p-4 sm:p-8">
+                        <div className="mb-3 sm:mb-4 p-3 sm:p-4 bg-slate-100 rounded-xl sm:rounded-2xl">
+                          <HeartPulse className="h-8 w-8 sm:h-12 sm:w-12 text-slate-400 mx-auto mb-2 sm:mb-3" />
                         </div>
-                        <h3 className="text-lg font-semibold text-slate-700 mb-2">
+                        <h3 className="text-base sm:text-lg font-semibold text-slate-700 mb-2">
                           {language === "rw" ? "Tangira Ikiganiro cyawe cy'Ubuzima" : 
                            language === "fr" ? "Commencez Votre Conversation Santé" : "Start Your Health Conversation"}
                         </h3>
-                        <p className="text-sm text-slate-600 max-w-md leading-relaxed">
+                        <p className="text-xs sm:text-sm text-slate-600 max-w-md leading-relaxed">
                           {language === "rw" ? "Sobanura ibimenyetso byawe by'umutima, ubwenge, cyangwa umubiri. Ndi hano kumva no gutanga ubufasha n'ubwenge." :
                            language === "fr" ? "Décrivez vos symptômes émotionnels, mentaux ou physiques. Je suis ici pour écouter et fournir un soutien compatissant et des conseils." : 
                            "Describe your emotional, mental, or physical symptoms. I'm here to listen and provide compassionate support and insights."}
@@ -429,12 +429,12 @@ const SymptomChecker = () => {
                           />
                         ))}
                         {isAnalyzing && (
-                          <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-2xl border border-blue-200 animate-pulse">
+                          <div className="flex items-center gap-3 p-3 sm:p-4 bg-blue-50 rounded-xl sm:rounded-2xl border border-blue-200 animate-pulse">
                             <div className="p-2 bg-blue-100 rounded-full">
-                              <Zap className="h-4 w-4 text-blue-600 animate-spin" />
+                              <Zap className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600 animate-spin" />
                             </div>
                             <div className="flex-1">
-                              <p className="text-sm font-medium text-blue-800">
+                              <p className="text-xs sm:text-sm font-medium text-blue-800">
                                 {language === "rw" ? "Gusuzuma ibimenyetso byawe..." : 
                                  language === "fr" ? "Analyse de vos symptômes..." : "Analyzing your symptoms..."}
                               </p>
@@ -445,9 +445,9 @@ const SymptomChecker = () => {
                             </div>
                             {/* Enhanced typing indicator */}
                             <div className="flex space-x-1">
-                              <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
-                              <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                              <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-600 rounded-full animate-bounce"></div>
+                              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
                             </div>
                           </div>
                         )}
@@ -457,7 +457,7 @@ const SymptomChecker = () => {
                   </ScrollArea>
 
                   {/* Input Area */}
-                  <div className="mt-6 space-y-4">
+                  <div className="mt-4 sm:mt-6 space-y-4">
                     <div className="relative">
                       <Textarea
                         ref={textareaRef}
@@ -468,7 +468,7 @@ const SymptomChecker = () => {
                           : language === "fr" 
                           ? "Décrivez comment vous vous sentez... (ex: 'Je me sens anxieux et j'ai du mal à dormir depuis une semaine...')"
                           : "Describe how you're feeling... (e.g., 'I've been feeling anxious and having trouble sleeping for the past week...')"}
-                        className="min-h-[100px] resize-none rounded-2xl border-slate-300 bg-white/80 focus:bg-white transition-all duration-200 text-base leading-relaxed pr-12"
+                        className="min-h-[80px] sm:min-h-[100px] resize-none rounded-xl sm:rounded-2xl border-slate-300 bg-white/80 focus:bg-white transition-all duration-200 text-sm sm:text-base leading-relaxed pr-10 sm:pr-12"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' && !e.shiftKey) {
                             e.preventDefault();
@@ -480,12 +480,12 @@ const SymptomChecker = () => {
                         onClick={handleAnalyze}
                         disabled={isAnalyzing || !symptoms.trim()}
                         size="icon"
-                        className="absolute bottom-3 right-3 h-10 w-10 rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none"
+                        className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 h-8 w-8 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none"
                       >
                         {isAnalyzing ? (
-                          <Zap className="h-4 w-4 animate-spin" />
+                          <Zap className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
                         ) : (
-                          <Send className="h-4 w-4" />
+                          <Send className="h-3 w-3 sm:h-4 sm:w-4" />
                         )}
                       </Button>
                     </div>
@@ -493,19 +493,19 @@ const SymptomChecker = () => {
                     {/* Enhanced Quick Symptoms with Categories */}
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                          <Plus className="h-4 w-4" />
+                        <p className="text-xs sm:text-sm font-semibold text-slate-700 flex items-center gap-2">
+                          <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
                           {language === "rw" ? "Ongeraho ibimenyetso byihuse" : 
                            language === "fr" ? "Ajouter Rapidement des Symptômes" : "Quick Add Symptoms"}
                         </p>
-                        <Badge variant="secondary" className="rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200">
-                          {language === "rw" ? "Kanda kugira uongere" : language === "fr" ? "Cliquez pour ajouter" : "Click to add"}
+                        <Badge variant="secondary" className="rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs">
+                          {language === "rw" ? "Kanda kugira wongere" : language === "fr" ? "Cliquez pour ajouter" : "Click to add"}
                         </Badge>
                       </div>
                       
-                      {/* Category Tabs */}
+                      {/* Category Tabs - Mobile Scrollable */}
                       <ScrollArea className="w-full">
-                        <div className="flex space-x-2 pb-2">
+                        <div className="flex space-x-2 pb-2 min-w-max">
                           {Object.entries(symptomCategories).map(([key, category]) => (
                             <Button
                               key={key}
@@ -513,27 +513,28 @@ const SymptomChecker = () => {
                               size="sm"
                               onClick={() => setActiveCategory(key)}
                               className={cn(
-                                "rounded-full whitespace-nowrap transition-all duration-200",
+                                "rounded-full whitespace-nowrap transition-all duration-200 text-xs",
                                 activeCategory === key 
                                   ? "bg-primary text-primary-foreground shadow-sm" 
                                   : "border-slate-300 bg-white/80 hover:bg-slate-100"
                               )}
                             >
-                              <span className="mr-1">{category.icon}</span>
-                              {category.name.split(' ')[0]}
+                              <span className="mr-1 hidden xs:inline">{category.icon}</span>
+                              <span className="max-xs:hidden">{category.name.split(' ')[0]}</span>
+                              <span className="xs:hidden">{category.icon}</span>
                             </Button>
                           ))}
                         </div>
                       </ScrollArea>
 
-                      {/* Symptoms Grid */}
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-40 overflow-y-auto">
+                      {/* Symptoms Grid - Responsive */}
+                      <div className="grid grid-cols-2 xs:grid-cols-3 gap-2 max-h-32 sm:max-h-40 overflow-y-auto">
                         {symptomCategories[activeCategory as keyof typeof symptomCategories].symptoms.map((symptom) => (
                           <Badge
                             key={symptom.name}
                             variant="outline"
                             className={cn(
-                              "cursor-pointer px-3 py-2 text-xs rounded-full transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-1 justify-center text-center",
+                              "cursor-pointer px-2 py-1.5 sm:px-3 sm:py-2 text-xs rounded-full transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-1 justify-center text-center",
                               symptom.isHighRisk
                                 ? "border-red-300 bg-red-50 text-red-700 hover:bg-red-100 hover:border-red-400 hover:text-red-800"
                                 : "border-slate-300 bg-white/80 hover:bg-primary hover:text-white hover:border-primary"
@@ -541,15 +542,15 @@ const SymptomChecker = () => {
                             onClick={() => addSymptom(symptom)}
                           >
                             <span className="text-xs">{symptom.icon}</span>
-                            <span className="truncate">{symptom.name}</span>
+                            <span className="truncate text-xs">{symptom.name}</span>
                           </Badge>
                         ))}
                       </div>
 
                       {activeCategory === "crisis" && (
-                        <div className="bg-red-50 border border-red-200 rounded-2xl p-3 animate-pulse">
+                        <div className="bg-red-50 border border-red-200 rounded-xl sm:rounded-2xl p-3 animate-pulse">
                           <div className="flex items-center gap-2 text-red-800">
-                            <AlertCircle className="h-4 w-4" />
+                            <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4" />
                             <p className="text-xs font-semibold">
                               {language === "rw" ? "Niba uri mu ngrorane, nyamuneka shaka ubufasha byihuse" :
                                language === "fr" ? "Si vous êtes en crise, veuillez chercher une aide immédiate" : 
@@ -564,8 +565,8 @@ const SymptomChecker = () => {
               </Card>
             </div>
 
-            {/* Information Panel - Takes 1/3 on large screens */}
-            <div className="space-y-6">
+            {/* Information Panel - Hidden on small screens, shown on medium and up */}
+            <div className="hidden lg:block space-y-6">
               <Card className="shadow-2xl border-0 bg-gradient-to-br from-white to-blue-50/50 rounded-3xl overflow-hidden">
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center gap-3 text-xl">
@@ -695,11 +696,11 @@ const SymptomChecker = () => {
             </div>
           </div>
 
-          {/* Enhanced Footer */}
-          <div className="mt-12 text-center">
-            <div className="inline-flex items-center gap-4 px-6 py-4 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60">
-              <Shield className="h-5 w-5 text-slate-600" />
-              <p className="text-sm text-slate-700">
+          {/* Enhanced Footer - Mobile Responsive */}
+          <div className="mt-8 sm:mt-12 text-center">
+            <div className="inline-flex items-center gap-3 px-4 py-3 sm:px-6 sm:py-4 bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border border-slate-200/60 max-w-full mx-2">
+              <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-slate-600 flex-shrink-0" />
+              <p className="text-xs sm:text-sm text-slate-700 text-left">
                 <span className="font-semibold">
                   {language === "rw" ? "Gikurikira:" : language === "fr" ? "Important :" : "Important:"}
                 </span>{" "}

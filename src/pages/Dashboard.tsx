@@ -18,231 +18,159 @@ const Dashboard = () => {
   const { t, language } = useLanguage();
 
   const heartRateData = [
-    { time: language === "rw" ? "Ku wa mbere" : language === "fr" ? "Lun" : "Mon", bpm: 72 },
-    { time: language === "rw" ? "Ku wa kabiri" : language === "fr" ? "Mar" : "Tue", bpm: 68 },
-    { time: language === "rw" ? "Ku wa gatatu" : language === "fr" ? "Mer" : "Wed", bpm: 75 },
-    { time: language === "rw" ? "Ku wa kane" : language === "fr" ? "Jeu" : "Thu", bpm: 70 },
-    { time: language === "rw" ? "Ku wa gatanu" : language === "fr" ? "Ven" : "Fri", bpm: 73 },
-    { time: language === "rw" ? "Ku wa gatandatu" : language === "fr" ? "Sam" : "Sat", bpm: 69 },
-    { time: language === "rw" ? "Ku cyumweru" : language === "fr" ? "Dim" : "Sun", bpm: 71 },
+    { time: language === "rw" ? "Mbe" : language === "fr" ? "Lun" : "Mon", bpm: 72 },
+    { time: language === "rw" ? "Kab" : language === "fr" ? "Mar" : "Tue", bpm: 68 },
+    { time: language === "rw" ? "Gat" : language === "fr" ? "Mer" : "Wed", bpm: 75 },
+    { time: language === "rw" ? "Kan" : language === "fr" ? "Jeu" : "Thu", bpm: 70 },
+    { time: language === "rw" ? "Gat" : language === "fr" ? "Ven" : "Fri", bpm: 73 },
+    { time: language === "rw" ? "Tan" : language === "fr" ? "Sam" : "Sat", bpm: 69 },
+    { time: language === "rw" ? "Cyu" : language === "fr" ? "Dim" : "Sun", bpm: 71 },
   ];
 
   const sleepData = [
-    { day: language === "rw" ? "Ku wa mbere" : language === "fr" ? "Lun" : "Mon", hours: 7.5 },
-    { day: language === "rw" ? "Ku wa kabiri" : language === "fr" ? "Mar" : "Tue", hours: 6.8 },
-    { day: language === "rw" ? "Ku wa gatatu" : language === "fr" ? "Mer" : "Wed", hours: 8.2 },
-    { day: language === "rw" ? "Ku wa kane" : language === "fr" ? "Jeu" : "Thu", hours: 7.1 },
-    { day: language === "rw" ? "Ku wa gatanu" : language === "fr" ? "Ven" : "Fri", hours: 7.9 },
-    { day: language === "rw" ? "Ku wa gatandatu" : language === "fr" ? "Sam" : "Sat", hours: 8.5 },
-    { day: language === "rw" ? "Ku cyumweru" : language === "fr" ? "Dim" : "Sun", hours: 8.0 },
+    { day: language === "rw" ? "Mbe" : language === "fr" ? "Lun" : "Mon", hours: 7.5 },
+    { day: language === "rw" ? "Kab" : language === "fr" ? "Mar" : "Tue", hours: 6.8 },
+    { day: language === "rw" ? "Gat" : language === "fr" ? "Mer" : "Wed", hours: 8.2 },
+    { day: language === "rw" ? "Kan" : language === "fr" ? "Jeu" : "Thu", hours: 7.1 },
+    { day: language === "rw" ? "Gat" : language === "fr" ? "Ven" : "Fri", hours: 7.9 },
+    { day: language === "rw" ? "Tan" : language === "fr" ? "Sam" : "Sat", hours: 8.5 },
+    { day: language === "rw" ? "Cyu" : language === "fr" ? "Dim" : "Sun", hours: 8.0 },
   ];
 
   const stats = [
-    {
-      title: language === "rw" ? "Umuvuduko w'umutima" : language === "fr" ? "Rythme Cardiaque" : "Heart Rate",
-      value: "72 bpm",
-      change: "+2%",
-      description: language === "rw" ? "kuva icyumweru gishize" : language === "fr" ? "depuis la semaine dernière" : "from last week",
-      icon: Heart,
-      color: "text-primary",
-    },
-    {
-      title: language === "rw" ? "Imikorere" : language === "fr" ? "Activité" : "Activity",
-      value: "8,234",
-      change: "+12%",
-      description: language === "rw" ? "kuva icyumweru gishize" : language === "fr" ? "depuis la semaine dernière" : "from last week",
-      icon: Activity,
-      color: "text-secondary",
-    },
-    {
-      title: language === "rw" ? "Icyuro" : language === "fr" ? "Sommeil" : "Sleep",
-      value: language === "rw" ? "amasaha 7.5" : language === "fr" ? "7.5 h" : "7.5 hrs",
-      change: "+5%",
-      description: language === "rw" ? "kuva icyumweru gishize" : language === "fr" ? "depuis la semaine dernière" : "from last week",
-      icon: Moon,
-      color: "text-accent",
-    },
-    {
-      title: language === "rw" ? "Iterambere" : language === "fr" ? "Progrès" : "Progress",
-      value: "85%",
-      change: "+8%",
-      description: language === "rw" ? "kuva icyumweru gishize" : language === "fr" ? "depuis la semaine dernière" : "from last week",
-      icon: TrendingUp,
-      color: "text-primary",
-    },
+    { title: t("dashboard.heartRate"), value: "72 bpm", change: "+2%", icon: Heart, color: "text-red-500" },
+    { title: t("dashboard.activity"), value: "8,234", change: "+12%", icon: Activity, color: "text-green-500" },
+    { title: t("dashboard.sleep"), value: language === "rw" ? "7.5h" : "7.5 hrs", change: "+5%", icon: Moon, color: "text-blue-500" },
+    { title: t("dashboard.progress"), value: "85%", change: "+8%", icon: TrendingUp, color: "text-purple-500" },
   ];
 
   const insights = [
     {
-      title: language === "rw" ? "Iterambere ryiza muri iki cyumweru! 🎉" : 
-              language === "fr" ? "Excellent progrès cette semaine ! 🎉" : 
-              "Great progress this week! 🎉",
-      description: language === "rw" ? "Imikorere yawe yiyongereye 12% kandi icyuro cyawe kirushije." :
-              language === "fr" ? "Vos niveaux d'activité sont en hausse de 12% et la qualité du sommeil s'est améliorée." :
-              "Your activity levels are up 12% and sleep quality has improved.",
-      gradient: true
+      title: language === "rw" ? "Iterambere ryiza! 🎉" : language === "fr" ? "Super progrès ! 🎉" : "Great progress! 🎉",
+      description: language === "rw" ? "Imikorere +12%, icyuro cyiza cyane." :
+        language === "fr" ? "Activité +12%, sommeil amélioré." :
+        "Activity up 12%, excellent sleep quality.",
+      type: "success" as const
     },
     {
-      title: language === "rw" ? "Inama" : language === "fr" ? "Recommandation" : "Recommendation",
-      description: language === "rw" ? "Gerageza gukomeza gusinzira mu bihe bisanzwe kugirango ubashe kuvura neza." :
-              language === "fr" ? "Essayez de maintenir des horaires de sommeil réguliers pour une récupération optimale." :
-              "Try to maintain consistent sleep schedules for optimal recovery.",
-      gradient: false
+      title: language === "rw" ? "Inama y'ubuzima" : language === "fr" ? "Conseil santé" : "Health Tip",
+      description: language === "rw" ? "Sinzira saa cyane kugira ngo ubone energie nyinshi." :
+        language === "fr" ? "Couche-toi à la même heure chaque soir." :
+        "Go to bed at the same time daily for better recovery.",
+      type: "tip" as const
     }
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 pb-24 md:pb-12">
       <Navigation />
-      
-      <main className="container py-12">
-        <div className="mb-8 animate-fade-in">
-          <h1 className="mb-2 text-4xl font-bold tracking-tight">
-            {language === "rw" ? "Ikibaho cy'Ubuzima" : language === "fr" ? "Tableau de Bord Santé" : "Health Dashboard"}
+
+      <main className="container max-w-7xl px-4 py-8 md:px-6 md:py-12">
+        {/* Header */}
+        <div className="mb-10 text-center md:text-left">
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70">
+            {language === "rw" ? "Ikibaho cy'Ubuzima" : language === "fr" ? "Tableau de Bord" : "Health Dashboard"}
           </h1>
-          <p className="text-lg text-muted-foreground">
-            {language === "rw" ? "Incamake y'ubuzima bwawe bw'icyumweru" : 
-             language === "fr" ? "Votre aperçu santé hebdomadaire" : 
-             "Your weekly health overview"}
+          <p className="mt-2 text-muted-foreground text-base md:text-lg">
+            {language === "rw" ? "Reba uko ubuzima bwawe bumeze" : language === "fr" ? "Votre santé en un coup d'œil" : "Your health at a glance"}
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8 animate-fade-up">
-          {stats.map((stat, index) => (
+        {/* Stats Grid - Mobile: 2 cols, Tablet: 2-4, Desktop: 4 */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+          {stats.map((stat, i) => (
             <Card
-              key={index}
-              className="p-6 shadow-medium hover-lift transition-all duration-300"
-              style={{ animationDelay: `${index * 100}ms` }}
+              key={i}
+              className="p-5 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-card/80 backdrop-blur border border-border/50"
             >
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">{stat.title}</p>
-                  <p className="text-3xl font-bold">{stat.value}</p>
-                  <p className="mt-2 text-sm text-accent">
-                    {stat.change} {stat.description}
-                  </p>
+              <div className="flex flex-col">
+                <div className="flex items-center justify-between mb-3">
+                  <stat.icon className={`h-9 w-9 ${stat.color} opacity-90`} />
+                  <span className={`text-sm font-bold ${stat.change.startsWith("+") ? "text-green-500" : "text-red-500"}`}>
+                    {stat.change}
+                  </span>
                 </div>
-                <stat.icon className={`h-8 w-8 ${stat.color}`} />
+                <p className="text-2xl md:text-3xl font-bold">{stat.value}</p>
+                <p className="text-xs md:text-sm text-muted-foreground mt-1">{stat.title}</p>
               </div>
             </Card>
           ))}
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Card className="p-6 shadow-large hover-lift animate-fade-up">
-            <h3 className="mb-6 flex items-center gap-2 text-xl font-semibold">
-              <Heart className="h-5 w-5 text-primary" />
-              {language === "rw" ? "Imiterere y'Umuvuduko w'Umutima" : 
-               language === "fr" ? "Tendances du Rythme Cardiaque" : 
-               "Heart Rate Trends"}
+        {/* Charts - Stack on mobile */}
+        <div className="grid lg:grid-cols-2 gap-6 mb-8">
+          {/* Heart Rate */}
+          <Card className="p-5 md:p-6 shadow-xl bg-card/90 backdrop-blur border border-border/50">
+            <h3 className="flex items-center gap-2 text-lg md:text-xl font-semibold mb-6">
+              <Heart className="h-6 w-6 text-red-500" />
+              {t("dashboard.heartRateTrends") || "Heart Rate Trends"}
             </h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={heartRateData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis
-                  dataKey="time"
-                  stroke="hsl(var(--muted-foreground))"
-                  style={{ fontSize: "12px" }}
-                />
-                <YAxis
-                  stroke="hsl(var(--muted-foreground))"
-                  style={{ fontSize: "12px" }}
-                  label={{
-                    value: language === "rw" ? "bpm" : language === "fr" ? "bpm" : "bpm",
-                    angle: -90,
-                    position: 'insideLeft',
-                    style: { textAnchor: 'middle', fontSize: "12px" }
-                  }}
-                />
+            <ResponsiveContainer width="100%" height={280}>
+              <LineChart data={heartRateData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="4 4" stroke="hsl(var(--border))" />
+                <XAxis dataKey="time" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} domain={[60, 80]} />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "12px",
-                    boxShadow: "var(--shadow-medium)",
-                  }}
-                  formatter={(value) => [value, language === "rw" ? "Umuvuduko w'umutima" : language === "fr" ? "Battements par minute" : "Heart Rate"]}
-                  labelFormatter={(label) => `${language === "rw" ? "Umunsi" : language === "fr" ? "Jour" : "Day"}: ${label}`}
+                  contentStyle={{ borderRadius: 12, border: "none", background: "hsl(var(--popover))" }}
+                  labelStyle={{ color: "hsl(var(--popover-foreground))" }}
                 />
                 <Line
                   type="monotone"
                   dataKey="bpm"
-                  stroke="hsl(var(--primary))"
+                  stroke="#ef4444"
                   strokeWidth={3}
-                  dot={{ fill: "hsl(var(--primary))", r: 4 }}
-                  activeDot={{ r: 6 }}
+                  dot={{ fill: "#ef4444", r: 5 }}
+                  activeDot={{ r: 7 }}
                 />
               </LineChart>
             </ResponsiveContainer>
           </Card>
 
-          <Card className="p-6 shadow-large hover-lift animate-fade-up" style={{ animationDelay: "100ms" }}>
-            <h3 className="mb-6 flex items-center gap-2 text-xl font-semibold">
-              <Moon className="h-5 w-5 text-accent" />
-              {language === "rw" ? "Ubwiza bwo Kuryama" : 
-               language === "fr" ? "Qualité du Sommeil" : 
-               "Sleep Quality"}
+          {/* Sleep */}
+          <Card className="p-5 md:p-6 shadow-xl bg-card/90 backdrop-blur border border-border/50">
+            <h3 className="flex items-center gap-2 text-lg md:text-xl font-semibold mb-6">
+              <Moon className="h-6 w-6 text-blue-500" />
+              {t("dashboard.sleepQuality") || "Sleep Quality"}
             </h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={sleepData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis
-                  dataKey="day"
-                  stroke="hsl(var(--muted-foreground))"
-                  style={{ fontSize: "12px" }}
-                />
-                <YAxis
-                  stroke="hsl(var(--muted-foreground))"
-                  style={{ fontSize: "12px" }}
-                  label={{
-                    value: language === "rw" ? "amasaha" : language === "fr" ? "heures" : "hours",
-                    angle: -90,
-                    position: 'insideLeft',
-                    style: { textAnchor: 'middle', fontSize: "12px" }
-                  }}
-                />
+            <ResponsiveContainer width="100%" height={280}>
+              <AreaChart data={sleepData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="4 4" stroke="hsl(var(--border))" />
+                <XAxis dataKey="day" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} domain={[5, 10]} />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "12px",
-                    boxShadow: "var(--shadow-medium)",
-                  }}
-                  formatter={(value) => [value, language === "rw" ? "amasaha" : language === "fr" ? "heures" : "hours"]}
-                  labelFormatter={(label) => `${language === "rw" ? "Umunsi" : language === "fr" ? "Jour" : "Day"}: ${label}`}
+                  contentStyle={{ borderRadius: 12, border: "none", background: "hsl(var(--popover))" }}
                 />
                 <Area
                   type="monotone"
                   dataKey="hours"
-                  stroke="hsl(var(--accent))"
-                  fill="hsl(var(--accent) / 0.2)"
+                  stroke="#3b82f6"
+                  fill="#93c5fd"
                   strokeWidth={3}
+                  fillOpacity={0.3}
                 />
               </AreaChart>
             </ResponsiveContainer>
           </Card>
         </div>
 
-        <Card className="mt-6 p-6 shadow-large animate-fade-up" style={{ animationDelay: "200ms" }}>
-          <h3 className="mb-4 text-xl font-semibold">
-            {language === "rw" ? "Ubwenge ku Buzima" : 
-             language === "fr" ? "Informations Santé" : 
-             "Health Insights"}
+        {/* Insights */}
+        <Card className="p-6 shadow-xl bg-gradient-to-br from-primary/5 via-background to-secondary/5 border border-border/50">
+          <h3 className="text-xl font-bold mb-5 flex items-center gap-2">
+            <span className="text-2xl">🧠</span>
+            {language === "rw" ? "Inama n'Ibimenyetso" : language === "fr" ? "Insights & Conseils" : "Insights & Tips"}
           </h3>
           <div className="space-y-4">
-            {insights.map((insight, index) => (
-              <div 
-                key={index}
-                className={`rounded-2xl p-4 ${
-                  insight.gradient 
-                    ? "bg-gradient-to-r from-primary/10 to-secondary/10" 
-                    : "bg-muted"
+            {insights.map((insight, i) => (
+              <div
+                key={i}
+                className={`rounded-2xl p-5 border ${
+                  insight.type === "success"
+                    ? "bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 dark:from-green-950/30 dark:to-emerald-950/30"
+                    : "bg-muted/70 border-border/50"
                 }`}
               >
-                <p className="font-medium">{insight.title}</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {insight.description}
-                </p>
+                <p className="font-semibold text-foreground">{insight.title}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{insight.description}</p>
               </div>
             ))}
           </div>
