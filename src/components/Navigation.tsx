@@ -17,7 +17,8 @@ const Navigation = () => {
         <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
           <Heart className="h-6 w-6 text-primary" />
           <span className="text-xl font-semibold tracking-tight">UMUTUZO AI</span>
-        </Link>
+        </Link>git push origin main
+
 
         <div className="flex items-center gap-2">
           <Link to="/symptom-checker">
