@@ -13,4 +13,4 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://umutuzoai.rw/sitemap.xml
+Sitemap: https://umutuzo-ai-health.pages.dev/sitemap.xml
