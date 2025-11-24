@@ -8,21 +8,17 @@
   </url>
 
   <url>
-    <loc>https://umutuzo-ai-health.pages.dev/about</loc>
+    <loc>https://umutuzo-ai-health.pages.dev/symptom-checker</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://umutuzo-ai-health.pages.dev/contact</loc>
+    <loc>https://umutuzo-ai-health.pages.dev/dashboard</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
-  <url>
-    <loc>https://umutuzo-ai-health.pages.dev/features</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
+  
 
 </urlset>
