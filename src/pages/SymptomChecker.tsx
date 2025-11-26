@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,10 +29,100 @@ import {
   Activity as ActivityIcon,
   AlertCircle,
   Menu,
-  X
+  X,
+  Copy,
+  Check,
+  Undo2,
+  Redo2,
+  LogIn,
+  UserPlus,
+  Star
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+
+// Chat History Management Class
+class ChatHistoryManager {
+  private history: string[][];
+  private future: string[][];
+  private currentState: string[];
+
+  constructor() {
+    this.history = [];
+    this.future = [];
+    this.currentState = [];
+  }
+
+  saveState(state: string[]) {
+    // Clear future when new state is saved (after undo + new action)
+    this.future = [];
+    // Save deep copy of current state to history
+    this.history.push(JSON.parse(JSON.stringify(state)));
+    this.currentState = state;
+    
+    // Limit history size to prevent memory issues
+    if (this.history.length > 50) {
+      this.history.shift();
+    }
+  }
+
+  undo(): string[] | null {
+    if (this.history.length > 0) {
+      // Save current state to future for redo
+      this.future.push(JSON.parse(JSON.stringify(this.currentState)));
+      // Restore previous state
+      const previousState = this.history.pop()!;
+      this.currentState = previousState;
+      return previousState;
+    }
+    return null;
+  }
+
+  redo(): string[] | null {
+    if (this.future.length > 0) {
+      // Save current state back to history
+      this.history.push(JSON.parse(JSON.stringify(this.currentState)));
+      // Restore future state
+      const nextState = this.future.pop()!;
+      this.currentState = nextState;
+      return nextState;
+    }
+    return null;
+  }
+
+  canUndo(): boolean {
+    return this.history.length > 0;
+  }
+
+  canRedo(): boolean {
+    return this.future.length > 0;
+  }
+
+  getHistorySize(): number {
+    return this.history.length;
+  }
+
+  getFutureSize(): number {
+    return this.future.length;
+  }
+}
+
+// Define types for symptom categories
+interface Symptom {
+  name: string;
+  icon: string;
+  isHighRisk?: boolean;
+}
+
+interface SymptomCategory {
+  name: string;
+  icon: string;
+  symptoms: Symptom[];
+}
+
+interface SymptomCategories {
+  [key: string]: SymptomCategory;
+}
 
 const SymptomChecker = () => {
   const [symptoms, setSymptoms] = useState("");
@@ -42,18 +133,27 @@ const SymptomChecker = () => {
   const [activeCategory, setActiveCategory] = useState<string>("emotional");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 0);
+  const [copiedMessageId, setCopiedMessageId] = useState<number | null>(null);
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const { toast } = useToast();
   const { t, language } = useLanguage();
+  const navigate = useNavigate();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  
+  // Initialize chat history manager
+  const chatHistoryManager = useRef(new ChatHistoryManager());
 
-  // Device detection
+  // Device detection with improved mobile detection
   useEffect(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
     };
 
+    // Set initial width
+    setWindowWidth(window.innerWidth);
+    
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -63,7 +163,7 @@ const SymptomChecker = () => {
   const isDesktop = windowWidth >= 1024;
 
   // Comprehensive Symptom Categories with translations
-  const symptomCategories = {
+  const symptomCategories: SymptomCategories = {
     emotional: {
       name: language === "rw" ? "Ibimenyetso by'umutima" : 
             language === "fr" ? "Symptômes Émotionnels" : "Emotional Symptoms",
@@ -144,6 +244,33 @@ const SymptomChecker = () => {
     }
   };
 
+  // Get auth prompt message
+  const getAuthPromptMessage = useCallback(() => {
+    if (language === "rw") {
+      return "🎉 Murakoze gukoresha serivisi yacu! Niba ushaka:\n• Kubika ikiganiro cyawe\n• Kubona inyunganizi zihariye\n• Gukomeza amakuru yawe\n• Kubona ubufasha bwihariye\n\n🔐 Hitamo ubundi buryo wo kwiyandikisha:";
+    } else if (language === "fr") {
+      return "🎉 Merci d'utiliser notre service ! Si vous souhaitez :\n• Sauvegarder votre conversation\n• Obtenir des conseils personnalisés\n• Continuer votre historique\n• Recevoir un soutien personnalisé\n\n🔐 Choisissez votre méthode d'inscription :";
+    } else {
+      return "🎉 Thank you for using our service! If you'd like to:\n• Save your conversation\n• Get personalized insights\n• Continue your history\n• Receive personalized support\n\n🔐 Choose your sign-up method:";
+    }
+  }, [language]);
+
+  // Check if user has sent 5 messages and show auth prompt
+  useEffect(() => {
+    const userMessageCount = conversation.filter(msg => msg.type === 'user').length;
+    if (userMessageCount >= 3 && !showAuthPrompt) { // Reduced to 3 for demo purposes
+      setShowAuthPrompt(true);
+      
+      // Add auth prompt message to conversation
+      const authPromptMessage = { 
+        type: "ai", 
+        content: getAuthPromptMessage(),
+        timestamp: new Date() 
+      };
+      setConversation(prev => [...prev, authPromptMessage]);
+    }
+  }, [conversation.length, showAuthPrompt, getAuthPromptMessage]);
+
   // Enhanced auto-scroll to bottom of conversation
   useEffect(() => {
     const scrollToBottom = () => {
@@ -174,10 +301,181 @@ const SymptomChecker = () => {
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
-      const newHeight = Math.min(textareaRef.current.scrollHeight, isMobile ? 120 : 150);
+      const newHeight = Math.min(textareaRef.current.scrollHeight, isMobile ? 100 : 140);
       textareaRef.current.style.height = newHeight + "px";
     }
   }, [symptoms, isMobile]);
+
+  // Copy message to clipboard
+  const copyMessageToClipboard = async (content: string, messageIndex: number) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedMessageId(messageIndex);
+      
+      toast({
+        title: language === "rw" ? "Ubutumwa Bwakopiwe" : 
+               language === "fr" ? "Message Copié" : "Message Copied",
+        description: language === "rw" ? "Ubutumya bwakopiwe mu clipboard." :
+               language === "fr" ? "Le message a été copié dans le presse-papiers." : "Message has been copied to clipboard.",
+        duration: 2000,
+      });
+
+      // Reset copied state after 2 seconds
+      setTimeout(() => setCopiedMessageId(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy: ', err);
+      toast({
+        title: language === "rw" ? "Ikosa ry'o Gukopiya" : 
+               language === "fr" ? "Erreur de Copie" : "Copy Error",
+        description: language === "rw" ? "Ntibishoboke gukopiya ubutumwa." :
+               language === "fr" ? "Impossible de copier le message." : "Failed to copy message.",
+        variant: "destructive",
+        duration: 3000,
+      });
+    }
+  };
+
+  // Copy entire conversation
+  const copyEntireConversation = async () => {
+    if (conversation.length === 0) {
+      toast({
+        title: language === "rw" ? "Nta Kiganiro" : 
+               language === "fr" ? "Aucune Conversation" : "No Conversation",
+        description: language === "rw" ? "Nta kiganiro cyo gukopiya." :
+               language === "fr" ? "Aucune conversation à copier." : "No conversation to copy.",
+        variant: "destructive",
+        duration: 3000,
+      });
+      return;
+    }
+
+    try {
+      const conversationText = conversation.map(msg => 
+        `${msg.type === 'user' ? '👤 You' : '🤖 AI'}: ${msg.content}\n[${formatTime(msg.timestamp)}]`
+      ).join('\n\n');
+
+      await navigator.clipboard.writeText(conversationText);
+      
+      toast({
+        title: language === "rw" ? "Ikiganiro Cyakopiwe" : 
+               language === "fr" ? "Conversation Copiée" : "Conversation Copied",
+        description: language === "rw" ? "Ikiganiro cyose cyakopiwe mu clipboard." :
+               language === "fr" ? "Toute la conversation a été copiée." : "Entire conversation has been copied.",
+        duration: 2000,
+      });
+    } catch (err) {
+      console.error('Failed to copy conversation: ', err);
+      toast({
+        title: language === "rw" ? "Ikosa ry'o Gukopiya" : 
+               language === "fr" ? "Erreur de Copie" : "Copy Error",
+        description: language === "rw" ? "Ntibishoboke gukopiya ikiganiro." :
+               language === "fr" ? "Impossible de copier la conversation." : "Failed to copy conversation.",
+        variant: "destructive",
+        duration: 3000,
+      });
+    }
+  };
+
+  // Undo functionality
+  const handleUndo = useCallback(() => {
+    if (chatHistoryManager.current.canUndo()) {
+      const previousState = chatHistoryManager.current.undo();
+      if (previousState) {
+        const previousConversation = previousState.map((content, index) => ({
+          type: index % 2 === 0 ? 'user' : 'ai',
+          content,
+          timestamp: new Date()
+        }));
+        setConversation(previousConversation);
+        
+        toast({
+          title: language === "rw" ? "Yahanuwe" : 
+                 language === "fr" ? "Annulé" : "Undone",
+          description: language === "rw" ? "Igikorwa cyahinduwe." :
+                 language === "fr" ? "Action annulée." : "Action undone.",
+          duration: 1500,
+        });
+      }
+    } else {
+      toast({
+        title: language === "rw" ? "Ntacyo Wahinduye" : 
+               language === "fr" ? "Rien à Annuler" : "Nothing to Undo",
+        description: language === "rw" ? "Nta bikorwa byahinduwe." :
+               language === "fr" ? "Aucune action à annuler." : "No actions to undo.",
+        duration: 2000,
+      });
+    }
+  }, [language, toast]);
+
+  // Redo functionality
+  const handleRedo = useCallback(() => {
+    if (chatHistoryManager.current.canRedo()) {
+      const nextState = chatHistoryManager.current.redo();
+      if (nextState) {
+        const nextConversation = nextState.map((content, index) => ({
+          type: index % 2 === 0 ? 'user' : 'ai',
+          content,
+          timestamp: new Date()
+        }));
+        setConversation(nextConversation);
+        
+        toast({
+          title: language === "rw" ? "Yongeye" : 
+                 language === "fr" ? "Refait" : "Redone",
+          description: language === "rw" ? "Igikorwa cyongewe." :
+                 language === "fr" ? "Action refaite." : "Action redone.",
+          duration: 1500,
+        });
+      }
+    } else {
+      toast({
+        title: language === "rw" ? "Ntacyo Wongeye" : 
+               language === "fr" ? "Rien à Refaire" : "Nothing to Redo",
+        description: language === "rw" ? "Nta bikorwa byongewe." :
+               language === "fr" ? "Aucune action à refaire." : "No actions to redo.",
+        duration: 2000,
+      });
+    }
+  }, [language, toast]);
+
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key === 'z') {
+        event.preventDefault();
+        handleUndo();
+      } else if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'z') {
+        event.preventDefault();
+        handleRedo();
+      } else if ((event.ctrlKey || event.metaKey) && event.key === 'y') {
+        event.preventDefault();
+        handleRedo();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleUndo, handleRedo]);
+
+  // Auth handlers
+  const handleSignIn = () => {
+    navigate('/signin');
+  };
+
+  const handleSignUp = () => {
+    navigate('/signup');
+  };
+
+  const handleContinueWithoutAccount = () => {
+    setShowAuthPrompt(false);
+    toast({
+      title: language === "rw" ? "Komeza" : 
+             language === "fr" ? "Continuer" : "Continue",
+      description: language === "rw" ? "Ukomeje utarayiye konti..." :
+             language === "fr" ? "Vous continuez sans compte..." : "Continuing without account...",
+      duration: 2000,
+    });
+  };
 
   const handleAnalyze = async () => {
     if (!symptoms.trim()) {
@@ -191,6 +489,10 @@ const SymptomChecker = () => {
       });
       return;
     }
+
+    // Save current state to history before making changes
+    const currentConversationContent = conversation.map(msg => msg.content);
+    chatHistoryManager.current.saveState(currentConversationContent);
 
     setIsAnalyzing(true);
     const userMessage = { type: "user", content: symptoms, timestamp: new Date() };
@@ -258,7 +560,7 @@ const SymptomChecker = () => {
     }
   };
 
-  const addSymptom = (symptom: { name: string; icon: string; isHighRisk?: boolean }) => {
+  const addSymptom = (symptom: Symptom) => {
     if (symptom.isHighRisk) {
       toast({
         title: language === "rw" ? "Ubufasha bwa Mbere Buke" : 
@@ -282,12 +584,24 @@ const SymptomChecker = () => {
 
     setSymptoms((prev) => (prev ? `${prev}, ${symptom.name}` : symptom.name));
     textareaRef.current?.focus();
+    
+    // Auto-close mobile menu after selecting a symptom on mobile
+    if (isMobile) {
+      setIsMobileMenuOpen(false);
+    }
   };
 
   const clearConversation = () => {
+    // Save current state to history before clearing
+    const currentConversationContent = conversation.map(msg => msg.content);
+    if (currentConversationContent.length > 0) {
+      chatHistoryManager.current.saveState(currentConversationContent);
+    }
+
     setConversation([]);
     setConversationId(null);
     setSymptoms("");
+    setShowAuthPrompt(false);
     toast({
       title: language === "rw" ? "Ikiganiro Cyasibwe" : 
              language === "fr" ? "Conversation Effacée" : "Conversation Cleared",
@@ -301,42 +615,57 @@ const SymptomChecker = () => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  // Enhanced ChatMessage with better mobile optimization
-  const ChatMessage = ({ type, content, timestamp }: { type: string, content: string, timestamp: Date }) => (
+  // Enhanced ChatMessage with larger text and better spacing
+  const ChatMessage = ({ type, content, timestamp, index }: { type: string, content: string, timestamp: Date, index: number }) => (
     <div className={cn(
-      "flex gap-2 sm:gap-3 mb-3 sm:mb-4 animate-in fade-in duration-300",
+      "flex gap-3 sm:gap-4 mb-4 sm:mb-6 animate-in fade-in duration-300 group relative",
       type === 'user' ? 'justify-end' : 'justify-start'
     )}>
       {type === 'ai' && (
         <div className={cn(
           "flex flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg",
-          isMobile ? "h-7 w-7" : isTablet ? "h-8 w-8" : "h-10 w-10"
+          isMobile ? "h-8 w-8" : isTablet ? "h-10 w-10" : "h-12 w-12"
         )}>
           <Bot className={cn(
             "text-white",
-            isMobile ? "h-3 w-3" : isTablet ? "h-4 w-4" : "h-5 w-5"
+            isMobile ? "h-4 w-4" : isTablet ? "h-5 w-5" : "h-6 w-6"
           )} />
         </div>
       )}
       
       <div className={cn(
-        "rounded-2xl sm:rounded-3xl px-3 py-2 sm:px-4 sm:py-3 md:px-5 md:py-4 shadow-sm transition-all duration-200 hover:shadow-md",
+        "rounded-2xl sm:rounded-3xl px-4 py-3 sm:px-5 sm:py-4 md:px-6 md:py-5 shadow-sm transition-all duration-200 hover:shadow-md group relative",
         type === 'user' 
-          ? 'bg-gradient-to-br from-primary to-primary/90 text-primary-foreground rounded-br-md max-w-[85%] sm:max-w-[80%]' 
+          ? 'bg-gradient-to-br from-primary to-primary/90 text-primary-foreground rounded-br-md max-w-[90%] sm:max-w-[85%]' 
           : content.includes('🚨') 
-            ? 'bg-gradient-to-br from-red-50 to-orange-50 border-2 border-red-200 rounded-bl-md max-w-[90%] sm:max-w-[85%]'
-            : 'bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-bl-md max-w-[90%] sm:max-w-[85%]'
+            ? 'bg-gradient-to-br from-red-50 to-orange-50 border-2 border-red-200 rounded-bl-md max-w-[95%] sm:max-w-[90%]'
+            : 'bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-bl-md max-w-[95%] sm:max-w-[90%]'
       )}>
+        {/* Copy Button - appears on hover */}
+        <button
+          onClick={() => copyMessageToClipboard(content, index)}
+          className={cn(
+            "absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-200 p-2 rounded-lg bg-white/80 shadow-sm hover:bg-white hover:shadow-md",
+            type === 'user' ? 'text-primary hover:text-primary/80' : 'text-slate-600 hover:text-slate-800'
+          )}
+        >
+          {copiedMessageId === index ? (
+            <Check className={isMobile ? "h-4 w-4" : "h-4 w-4"} />
+          ) : (
+            <Copy className={isMobile ? "h-4 w-4" : "h-4 w-4"} />
+          )}
+        </button>
+        
         <p className={cn(
-          "leading-relaxed whitespace-pre-wrap break-words",
-          isMobile ? "text-xs" : "text-sm"
+          "leading-relaxed whitespace-pre-wrap break-words pr-10",
+          isMobile ? "text-base leading-7" : "text-lg leading-8"
         )}>{content}</p>
         <div className={cn(
-          "flex items-center gap-1",
-          isMobile ? "text-xs mt-1" : "text-xs mt-2",
-          type === 'user' ? 'text-primary-foreground/70' : 'text-slate-500'
+          "flex items-center gap-2 mt-3",
+          isMobile ? "text-sm" : "text-base",
+          type === 'user' ? 'text-primary-foreground/80' : 'text-slate-600'
         )}>
-          <Clock className={isMobile ? "h-2 w-2" : "h-3 w-3"} />
+          <Clock className={isMobile ? "h-3 w-3" : "h-4 w-4"} />
           {formatTime(timestamp)}
         </div>
       </div>
@@ -344,14 +673,79 @@ const SymptomChecker = () => {
       {type === 'user' && (
         <div className={cn(
           "flex flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg",
-          isMobile ? "h-7 w-7" : isTablet ? "h-8 w-8" : "h-10 w-10"
+          isMobile ? "h-8 w-8" : isTablet ? "h-10 w-10" : "h-12 w-12"
         )}>
           <User className={cn(
             "text-white",
-            isMobile ? "h-3 w-3" : isTablet ? "h-4 w-4" : "h-5 w-5"
+            isMobile ? "h-4 w-4" : isTablet ? "h-5 w-5" : "h-6 w-6"
           )} />
         </div>
       )}
+    </div>
+  );
+
+  // Auth Prompt Component
+  const AuthPrompt = () => (
+    <div className="flex justify-start gap-4 mb-6">
+      <div className={cn(
+        "flex flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-yellow-500 to-orange-600 shadow-lg",
+        isMobile ? "h-8 w-8" : isTablet ? "h-10 w-10" : "h-12 w-12"
+      )}>
+        <Star className={cn(
+          "text-white",
+          isMobile ? "h-4 w-4" : isTablet ? "h-5 w-5" : "h-6 w-6"
+        )} />
+      </div>
+      <div className={cn(
+        "rounded-2xl sm:rounded-3xl px-4 py-3 sm:px-5 sm:py-4 md:px-6 md:py-5 bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-bl-md max-w-[95%] sm:max-w-[90%]"
+      )}>
+        <div className="space-y-4">
+          <p className={cn(
+            "leading-relaxed whitespace-pre-wrap break-words text-yellow-800",
+            isMobile ? "text-base leading-7" : "text-lg leading-8"
+          )}>
+            {getAuthPromptMessage()}
+          </p>
+          
+          <div className={cn(
+            "flex flex-wrap gap-2",
+            isMobile ? "flex-col" : "flex-row"
+          )}>
+            <Button
+              onClick={handleSignIn}
+              className={cn(
+                "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white transition-all duration-200",
+                isMobile ? "w-full justify-center" : "flex-1"
+              )}
+            >
+              <LogIn className={cn("mr-2", isMobile ? "h-4 w-4" : "h-4 w-4")} />
+              {language === "rw" ? "Injira" : language === "fr" ? "Se Connecter" : "Sign In"}
+            </Button>
+            
+            <Button
+              onClick={handleSignUp}
+              className={cn(
+                "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white transition-all duration-200",
+                isMobile ? "w-full justify-center" : "flex-1"
+              )}
+            >
+              <UserPlus className={cn("mr-2", isMobile ? "h-4 w-4" : "h-4 w-4")} />
+              {language === "rw" ? "Iyandikishe" : language === "fr" ? "S'inscrire" : "Sign Up"}
+            </Button>
+            
+            <Button
+              onClick={handleContinueWithoutAccount}
+              variant="outline"
+              className={cn(
+                "border-slate-300 text-slate-600 hover:bg-slate-50 transition-all duration-200",
+                isMobile ? "w-full justify-center" : "flex-1"
+              )}
+            >
+              {language === "rw" ? "Komeza utaranditse" : language === "fr" ? "Continuer sans compte" : "Continue without account"}
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 
@@ -362,7 +756,16 @@ const SymptomChecker = () => {
       <main className="container py-3 sm:py-6 md:py-8 px-3 sm:px-4 md:px-6">
         <div className="mx-auto max-w-6xl">
           {/* Enhanced Mobile Menu Button */}
-          <div className="lg:hidden mb-4 flex justify-end">
+          <div className="lg:hidden mb-4 flex justify-between items-center">
+            <div className="flex-1">
+              <h1 className={cn(
+                "font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent",
+                isMobile ? "text-lg" : "text-xl"
+              )}>
+                {language === "rw" ? "Umufasha w'Ubuzima" : 
+                 language === "fr" ? "Assistant Santé" : "Health Assistant"}
+              </h1>
+            </div>
             <Button
               variant="outline"
               size="sm"
@@ -374,111 +777,152 @@ const SymptomChecker = () => {
           </div>
 
           {/* Enhanced Header with device-specific optimizations */}
-          <div className={cn(
-            "text-center animate-fade-in",
-            isMobile ? "mb-4" : isTablet ? "mb-8" : "mb-12"
-          )}>
+          {!isMobile && (
             <div className={cn(
-              "flex justify-center",
-              isMobile ? "mb-3" : isTablet ? "mb-4" : "mb-6"
+              "text-center animate-fade-in",
+              isTablet ? "mb-6" : "mb-8"
             )}>
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full blur-lg opacity-30 animate-pulse"></div>
-                <div className={cn(
-                  "relative bg-gradient-to-br from-white to-slate-100 rounded-xl border border-slate-200",
-                  isMobile ? "p-3 shadow-lg" : 
-                  isTablet ? "p-4 sm:p-5 shadow-xl" : 
-                  "p-6 shadow-2xl sm:rounded-2xl md:rounded-3xl"
-                )}>
-                  <Heart className={cn(
-                    "text-primary animate-heartbeat",
-                    isMobile ? "h-8 w-8" : 
-                    isTablet ? "h-10 w-10 sm:h-12 sm:w-12" : 
-                    "h-16 w-16"
-                  )} />
-                  <Brain className={cn(
-                    "text-primary absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2",
-                    isMobile ? "h-4 w-4" : 
-                    isTablet ? "h-5 w-5 sm:h-6 sm:w-6" : 
-                    "h-8 w-8"
-                  )} />
+              <div className={cn(
+                "flex justify-center",
+                isTablet ? "mb-4" : "mb-6"
+              )}>
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full blur-lg opacity-30 animate-pulse"></div>
+                  <div className={cn(
+                    "relative bg-gradient-to-br from-white to-slate-100 rounded-xl border border-slate-200",
+                    isTablet ? "p-4 shadow-xl" : "p-6 shadow-2xl sm:rounded-2xl"
+                  )}>
+                    <Heart className={cn(
+                      "text-primary animate-heartbeat",
+                      isTablet ? "h-10 w-10" : "h-12 w-12"
+                    )} />
+                    <Brain className={cn(
+                      "text-primary absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2",
+                      isTablet ? "h-5 w-5" : "h-6 w-6"
+                    )} />
+                  </div>
                 </div>
               </div>
+              <h1 className={cn(
+                "font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent tracking-tight px-2",
+                isTablet ? "text-2xl mb-3" : "text-3xl mb-4"
+              )}>
+                {language === "rw" ? "Umufasha w'Ubuzima w'Ubwenge n'Umutima" : 
+                 language === "fr" ? "Assistant Santé Mentale et Cardiaque IA" : "Mental & Heart Health AI Assistant"}
+              </h1>
+              <p className={cn(
+                "text-muted-foreground max-w-2xl mx-auto leading-relaxed",
+                isTablet ? "text-sm px-3" : "text-base px-4"
+              )}>
+                {language === "rw" ? "Umufasha wawe w'ubwenge w'impuhwe wo gusobanukirwa ibimenyetso by'umutima, ubwenge n'umubiri" :
+                 language === "fr" ? "Votre partenaire IA compatissant pour comprendre les symptômes émotionnels, mentaux et physiques" : 
+                 "Your compassionate AI partner for understanding emotional, mental, and physical symptoms"}
+              </p>
             </div>
-            <h1 className={cn(
-              "font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent tracking-tight px-2",
-              isMobile ? "text-xl mb-2" : 
-              isTablet ? "text-2xl sm:text-3xl mb-3" : 
-              "text-4xl lg:text-5xl mb-4"
-            )}>
-              {language === "rw" ? "Umufasha w'Ubuzima w'Ubwenge n'Umutima" : 
-               language === "fr" ? "Assistant Santé Mentale et Cardiaque IA" : "Mental & Heart Health AI Assistant"}
-            </h1>
-            <p className={cn(
-              "text-muted-foreground max-w-2xl mx-auto leading-relaxed",
-              isMobile ? "text-xs px-2" : 
-              isTablet ? "text-sm sm:text-base px-3" : 
-              "text-lg lg:text-xl px-4"
-            )}>
-              {language === "rw" ? "Umufasha wawe w'ubwenge w'impuhwe wo gusobanukirwa ibimenyetso by'umutima, ubwenge n'umubiri" :
-               language === "fr" ? "Votre partenaire IA compatissant pour comprendre les symptômes émotionnels, mentaux et physiques" : 
-               "Your compassionate AI partner for understanding emotional, mental, and physical symptoms"}
-            </p>
-          </div>
+          )}
 
-          {/* Enhanced Main Layout with better device handling */}
+          {/* Enhanced Main Layout with better mobile handling */}
           <div className={cn(
             "grid gap-4 lg:grid-cols-3",
-            isMobile ? "gap-3" : isTablet ? "gap-5 sm:gap-6" : "gap-6"
+            isMobile ? "gap-3" : isTablet ? "gap-5" : "gap-6"
           )}>
             {/* Chat Section - Enhanced for all devices */}
-            <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+            <div className={cn(
+              "space-y-4",
+              isMobile ? "col-span-full" : "lg:col-span-2"
+            )}>
               <Card className={cn(
                 "border-0 bg-white/80 backdrop-blur-sm overflow-hidden",
                 isMobile ? "shadow-lg rounded-xl" :
-                isTablet ? "shadow-xl sm:rounded-2xl" :
-                "shadow-2xl md:rounded-3xl"
+                isTablet ? "shadow-xl rounded-2xl" :
+                "shadow-2xl rounded-3xl"
               )}>
                 <CardHeader className={cn(
                   "bg-gradient-to-r from-slate-50 to-slate-100/80 border-b border-slate-200/60",
-                  isMobile ? "pb-2" : isTablet ? "pb-3" : "pb-4"
+                  isMobile ? "py-3" : isTablet ? "py-4" : "py-5"
                 )}>
                   <div className={cn(
-                    "flex justify-between",
-                    isMobile ? "flex-col gap-2" : "flex-row sm:items-center gap-3"
+                    "flex justify-between items-center",
+                    isMobile ? "flex-col gap-3" : "flex-row gap-4"
                   )}>
                     <div className="flex items-center gap-2 sm:gap-3">
                       <div className={cn(
                         "bg-primary/10 rounded-lg",
-                        isMobile ? "p-1" : isTablet ? "p-1.5 sm:p-2" : "p-2"
+                        isMobile ? "p-1.5" : isTablet ? "p-2" : "p-2.5"
                       )}>
                         <MessageCircle className={cn(
                           "text-primary",
-                          isMobile ? "h-4 w-4" : isTablet ? "h-4 w-4 sm:h-5 sm:w-5" : "h-6 w-6"
+                          isMobile ? "h-4 w-4" : isTablet ? "h-5 w-5" : "h-6 w-6"
                         )} />
                       </div>
                       <div>
                         <CardTitle className={cn(
                           "font-bold text-slate-800",
                           isMobile ? "text-base" : 
-                          isTablet ? "text-lg sm:text-xl" : 
-                          "text-xl lg:text-2xl"
+                          isTablet ? "text-lg" : 
+                          "text-xl"
                         )}>
-                          {language === "rw" ? "Ikiganiro cy'Ubuzima" : 
-                           language === "fr" ? "Conversation Santé" : "Health Conversation"}
+                          {language === "rw" ? "Ikiganiro" : 
+                           language === "fr" ? "Conversation" : "Chat"}
                         </CardTitle>
                         <p className={cn(
                           "text-slate-600",
-                          isMobile ? "text-xs mt-0.5" : "text-xs mt-1"
+                          isMobile ? "text-xs" : "text-sm"
                         )}>
-                          {conversation.length} {language === "rw" ? "ubutumwa" : language === "fr" ? "messages" : "messages"} • {language === "rw" ? "Isesengura ryuzuye rya AI" : language === "fr" ? "Analyse holistique IA" : "Holistic AI analysis"}
+                          {conversation.length} {language === "rw" ? "ubutumwa" : language === "fr" ? "messages" : "messages"}
                         </p>
                       </div>
                     </div>
                     <div className={cn(
                       "flex items-center gap-1",
-                      isMobile ? "justify-end gap-1" : "gap-2"
+                      isMobile ? "justify-center w-full" : "gap-2"
                     )}>
+                      {/* Undo/Redo Buttons */}
+                      <div className="flex items-center gap-1 border-r border-slate-300 pr-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={handleUndo}
+                          disabled={!chatHistoryManager.current.canUndo()}
+                          className={cn(
+                            "rounded-full border-slate-300 transition-all duration-200",
+                            isMobile ? "h-8 w-8 p-0" : "h-8 w-8 p-0"
+                          )}
+                          title={language === "rw" ? "Ongera" : language === "fr" ? "Annuler" : "Undo"}
+                        >
+                          <Undo2 className={cn("h-3.5 w-3.5")} />
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={handleRedo}
+                          disabled={!chatHistoryManager.current.canRedo()}
+                          className={cn(
+                            "rounded-full border-slate-300 transition-all duration-200",
+                            isMobile ? "h-8 w-8 p-0" : "h-8 w-8 p-0"
+                          )}
+                          title={language === "rw" ? "Ongera" : language === "fr" ? "Refaire" : "Redo"}
+                        >
+                          <Redo2 className={cn("h-3.5 w-3.5")} />
+                        </Button>
+                      </div>
+
+                      {/* Copy Conversation Button */}
+                      {conversation.length > 0 && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={copyEntireConversation}
+                          className={cn(
+                            "rounded-full border-slate-300 transition-all duration-200",
+                            isMobile ? "h-8 px-3" : "h-8"
+                          )}
+                        >
+                          <Copy className={cn("mr-1 h-3.5 w-3.5")} />
+                          {isMobile ? "" : (language === "rw" ? "Kopiya" : language === "fr" ? "Copier" : "Copy")}
+                        </Button>
+                      )}
+
                       {conversation.length > 0 && (
                         <Button 
                           variant="outline" 
@@ -486,142 +930,111 @@ const SymptomChecker = () => {
                           onClick={clearConversation}
                           className={cn(
                             "rounded-full border-slate-300 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all duration-200",
-                            isMobile ? "text-xs h-7 px-2" : "text-xs h-8"
+                            isMobile ? "h-8 px-3" : "h-8"
                           )}
                         >
-                          <Trash2 className={cn("mr-1", isMobile ? "h-3 w-3" : "h-3 w-3")} />
-                          {language === "rw" ? "Siba" : language === "fr" ? "Effacer" : "Clear"}
+                          <Trash2 className={cn("mr-1 h-3.5 w-3.5")} />
+                          {isMobile ? "" : (language === "rw" ? "Siba" : language === "fr" ? "Effacer" : "Clear")}
                         </Button>
                       )}
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => setIsExpanded(!isExpanded)}
-                        className={cn(
-                          "rounded-full border-slate-300 transition-all duration-200",
-                          isMobile ? "text-xs h-7 px-2" : "text-xs h-8"
-                        )}
-                      >
-                        {isExpanded ? 
-                          (language === "rw" ? "Gutumba" : language === "fr" ? "Réduire" : "Collapse") : 
-                          (language === "rw" ? "Gukura" : language === "fr" ? "Développer" : "Expand")}
-                      </Button>
                     </div>
                   </div>
                 </CardHeader>
                 
                 <CardContent className={cn(
-                  isMobile ? "p-3" : isTablet ? "p-4" : "p-6"
+                  isMobile ? "p-3" : isTablet ? "p-4" : "p-5"
                 )}>
                   {/* Enhanced Conversation Area with device-specific heights */}
                   <ScrollArea 
                     ref={scrollAreaRef}
                     className={cn(
                       "border border-slate-200 bg-white/50 transition-all duration-300",
-                      isMobile ? "rounded-lg p-2" : 
-                      isTablet ? "rounded-xl p-3" : 
-                      "rounded-2xl p-4",
+                      isMobile ? "rounded-lg p-3" : 
+                      isTablet ? "rounded-xl p-4" : 
+                      "rounded-2xl p-5",
                       isExpanded ? 
-                        (isMobile ? "h-48" : isTablet ? "h-64 sm:h-72" : "h-80 lg:h-96") : 
-                        (isMobile ? "h-32" : isTablet ? "h-48 sm:h-56" : "h-64 lg:h-80")
+                        (isMobile ? "h-64" : isTablet ? "h-96" : "h-[500px]") : 
+                        (isMobile ? "h-48" : isTablet ? "h-80" : "h-96")
                     )}
                   >
                     {conversation.length === 0 ? (
                       <div className={cn(
                         "flex h-full flex-col items-center justify-center text-slate-500 text-center",
-                        isMobile ? "p-3" : isTablet ? "p-4" : "p-6 lg:p-8"
+                        isMobile ? "p-4" : isTablet ? "p-6" : "p-8"
                       )}>
                         <div className={cn(
                           "bg-slate-100 rounded-lg",
-                          isMobile ? "p-2 mb-2" : 
-                          isTablet ? "p-3 mb-3" : 
-                          "p-4 mb-4 sm:rounded-xl md:rounded-2xl"
+                          isMobile ? "p-3 mb-3" : 
+                          isTablet ? "p-4 mb-4" : 
+                          "p-5 mb-5"
                         )}>
                           <HeartPulse className={cn(
                             "text-slate-400 mx-auto",
-                            isMobile ? "h-6 w-6" : 
-                            isTablet ? "h-8 w-8 sm:h-10 sm:w-10" : 
-                            "h-10 w-10 lg:h-12 lg:w-12"
+                            isMobile ? "h-8 w-8" : 
+                            isTablet ? "h-10 w-10" : 
+                            "h-12 w-12"
                           )} />
                         </div>
                         <h3 className={cn(
-                          "font-semibold text-slate-700",
-                          isMobile ? "text-sm mb-1" : 
-                          isTablet ? "text-base mb-2" : 
-                          "text-lg mb-2"
+                          "font-semibold text-slate-700 mb-2",
+                          isMobile ? "text-base" : 
+                          isTablet ? "text-lg" : 
+                          "text-xl"
                         )}>
-                          {language === "rw" ? "Tangira Ikiganiro cyawe cy'Ubuzima" : 
-                           language === "fr" ? "Commencez Votre Conversation Santé" : "Start Your Health Conversation"}
+                          {language === "rw" ? "Tangira Ikiganiro" : 
+                           language === "fr" ? "Commencez la Conversation" : "Start Chatting"}
                         </h3>
                         <p className={cn(
                           "text-slate-600 max-w-md leading-relaxed",
-                          isMobile ? "text-xs" : "text-sm"
+                          isMobile ? "text-sm" : "text-base"
                         )}>
-                          {language === "rw" ? "Sobanura ibimenyetso byawe by'umutima, ubwenge, cyangwa umubiri. Ndi hano kumva no gutanga ubufasha n'ubwenge." :
-                           language === "fr" ? "Décrivez vos symptômes émotionnels, mentaux ou physiques. Je suis ici pour écouter et fournir un soutien compatissant et des conseils." : 
-                           "Describe your emotional, mental, or physical symptoms. I'm here to listen and provide compassionate support and insights."}
+                          {language === "rw" ? "Sobanura ibimenyetso byawe by'umutima, ubwenge, cyangwa umubiri." :
+                           language === "fr" ? "Décrivez vos symptômes émotionnels, mentaux ou physiques." : 
+                           "Describe your emotional, mental, or physical symptoms."}
                         </p>
                       </div>
                     ) : (
-                      <div className={isMobile ? "space-y-1" : "space-y-2"}>
-                        {conversation.map((msg, index) => (
-                          <ChatMessage 
-                            key={index} 
-                            type={msg.type} 
-                            content={msg.content} 
-                            timestamp={msg.timestamp}
+                      <div className="space-y-2">
+                        {conversation.map((message, index) => (
+                          <ChatMessage
+                            key={index}
+                            type={message.type}
+                            content={message.content}
+                            timestamp={message.timestamp}
+                            index={index}
                           />
                         ))}
+                        
+                        {/* Auth Prompt */}
+                        {showAuthPrompt && <AuthPrompt />}
+                        
                         {isAnalyzing && (
-                          <div className={cn(
-                            "flex items-center bg-blue-50 border border-blue-200 animate-pulse",
-                            isMobile ? "gap-2 p-2 rounded-lg" : 
-                            isTablet ? "gap-3 p-3 rounded-xl" : 
-                            "gap-3 p-4 rounded-2xl"
-                          )}>
+                          <div className="flex justify-start gap-4 mb-6">
                             <div className={cn(
-                              "bg-blue-100 rounded-full",
-                              isMobile ? "p-1" : "p-2"
+                              "flex flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg",
+                              isMobile ? "h-8 w-8" : isTablet ? "h-10 w-10" : "h-12 w-12"
                             )}>
-                              <Zap className={cn(
-                                "text-blue-600 animate-spin",
-                                isMobile ? "h-2 w-2" : 
-                                isTablet ? "h-3 w-3" : 
-                                "h-4 w-4"
+                              <Bot className={cn(
+                                "text-white",
+                                isMobile ? "h-4 w-4" : isTablet ? "h-5 w-5" : "h-6 w-6"
                               )} />
                             </div>
-                            <div className="flex-1">
-                              <p className={cn(
-                                "font-medium text-blue-800",
-                                isMobile ? "text-xs" : "text-sm"
-                              )}>
-                                {language === "rw" ? "Gusuzuma ibimenyetso byawe..." : 
-                                 language === "fr" ? "Analyse de vos symptômes..." : "Analyzing your symptoms..."}
-                              </p>
-                              <p className={cn(
-                                "text-blue-600",
-                                isMobile ? "text-xs mt-0.5" : "text-xs mt-1"
-                              )}>
-                                {language === "rw" ? "Bishobora gutora iminsi mike" : 
-                                 language === "fr" ? "Cela peut prendre quelques instants" : "This may take a few moments"}
-                              </p>
-                            </div>
                             <div className={cn(
-                              "flex",
-                              isMobile ? "space-x-0.5" : "space-x-1"
+                              "rounded-2xl sm:rounded-3xl px-4 py-3 sm:px-5 sm:py-4 md:px-6 md:py-5 bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-bl-md max-w-[95%] sm:max-w-[90%]"
                             )}>
-                              {[0, 0.1, 0.2].map((delay) => (
-                                <div 
-                                  key={delay}
-                                  className={cn(
-                                    "bg-blue-600 rounded-full animate-bounce",
-                                    isMobile ? "w-1 h-1" : 
-                                    isTablet ? "w-1.5 h-1.5" : 
-                                    "w-2 h-2"
-                                  )}
-                                  style={{animationDelay: `${delay}s`}}
-                                />
-                              ))}
+                              <div className="flex items-center gap-3">
+                                <div className="flex space-x-1">
+                                  <div className="w-3 h-3 bg-slate-400 rounded-full animate-bounce"></div>
+                                  <div className="w-3 h-3 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                                  <div className="w-3 h-3 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                                </div>
+                                <span className={cn(
+                                  "text-slate-600",
+                                  isMobile ? "text-base" : "text-lg"
+                                )}>
+                                  {language === "rw" ? "Avuga..." : language === "fr" ? "En train d'écrire..." : "Thinking..."}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         )}
@@ -630,435 +1043,196 @@ const SymptomChecker = () => {
                     )}
                   </ScrollArea>
 
-                  {/* Enhanced Input Area */}
+                  {/* Input Area */}
                   <div className={cn(
-                    "space-y-3",
-                    isMobile ? "mt-3" : isTablet ? "mt-4" : "mt-6"
+                    "mt-4 space-y-3",
+                    isMobile ? "space-y-2" : "space-y-3"
                   )}>
-                    <div className="relative">
-                      <Textarea
-                        ref={textareaRef}
-                        value={symptoms}
-                        onChange={(e) => setSymptoms(e.target.value)}
-                        placeholder={language === "rw" 
-                          ? "Sobanura ukuntu urumva... (urugero: 'Numvise ubwoba kandi ndagorwa no gusinzira icyumweru gishize...')" 
-                          : language === "fr" 
-                          ? "Décrivez comment vous vous sentez... (ex: 'Je me sens anxieux et j'ai du mal à dormir depuis une semaine...')"
-                          : "Describe how you're feeling... (e.g., 'I've been feeling anxious and having trouble sleeping for the past week...')"}
-                        className={cn(
-                          "resize-none border-slate-300 bg-white/80 focus:bg-white transition-all duration-200 leading-relaxed",
-                          isMobile ? 
-                            "min-h-[60px] rounded-lg text-xs pr-8" :
-                          isTablet ? 
-                            "min-h-[80px] rounded-xl text-sm sm:text-base pr-10" :
-                            "min-h-[100px] rounded-2xl text-base pr-12"
-                        )}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            handleAnalyze();
-                          }
-                        }}
-                      />
+                    <Textarea
+                      ref={textareaRef}
+                      value={symptoms}
+                      onChange={(e) => setSymptoms(e.target.value)}
+                      placeholder={
+                        language === "rw" ? "Sobanura ibimenyetso byawe hano..." :
+                        language === "fr" ? "Décrivez vos symptômes ici..." :
+                        "Describe your symptoms here..."
+                      }
+                      className={cn(
+                        "resize-none border-slate-300 focus:border-primary transition-all duration-200 bg-white/80 backdrop-blur-sm",
+                        isMobile ? "min-h-[60px] text-base" : "min-h-[80px] text-lg"
+                      )}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleAnalyze();
+                        }
+                      }}
+                    />
+                    <div className="flex justify-between items-center">
+                      <div className={cn(
+                        "text-slate-500",
+                        isMobile ? "text-xs" : "text-sm"
+                      )}>
+                        {language === "rw" ? "Kanda Enter kwohereza" : 
+                         language === "fr" ? "Enter pour envoyer" : 
+                         "Enter to send"}
+                      </div>
                       <Button
                         onClick={handleAnalyze}
                         disabled={isAnalyzing || !symptoms.trim()}
-                        size="icon"
                         className={cn(
-                          "absolute bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none",
-                          isMobile ? 
-                            "bottom-1 right-1 h-6 w-6 rounded-md" :
-                          isTablet ? 
-                            "bottom-2 right-2 h-7 w-7 sm:h-8 sm:w-8 rounded-lg" :
-                            "bottom-3 right-3 h-8 w-8 lg:h-10 lg:w-10 rounded-xl"
+                          "bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed",
+                          isMobile ? "px-4 py-2 text-base" : "px-6 py-2 text-lg"
                         )}
                       >
                         {isAnalyzing ? (
-                          <Zap className={cn(
-                            "animate-spin",
-                            isMobile ? "h-2 w-2" : 
-                            isTablet ? "h-3 w-3" : 
-                            "h-4 w-4"
-                          )} />
+                          <>
+                            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                            {language === "rw" ? "Avuga..." : language === "fr" ? "Analyse..." : "Analyzing..."}
+                          </>
                         ) : (
-                          <Send className={cn(
-                            isMobile ? "h-2 w-2" : 
-                            isTablet ? "h-3 w-3" : 
-                            "h-4 w-4"
-                          )} />
+                          <>
+                            <Sparkles className={cn("mr-2", isMobile ? "h-4 w-4" : "h-5 w-5")} />
+                            {language === "rw" ? "Suzuma" : language === "fr" ? "Analyser" : "Analyze"}
+                          </>
                         )}
                       </Button>
                     </div>
-
-                    {/* Enhanced Quick Symptoms Section */}
-                    <div className={cn(
-                      "space-y-3",
-                      isMobile ? "space-y-2" : "space-y-4"
-                    )}>
-                      <div className="flex items-center justify-between">
-                        <p className={cn(
-                          "font-semibold text-slate-700 flex items-center gap-1",
-                          isMobile ? "text-xs gap-1" : "text-xs gap-2"
-                        )}>
-                          <Plus className={isMobile ? "h-3 w-3" : "h-3 w-3"} />
-                          {language === "rw" ? "Ongeraho ibimenyetso byihuse" : 
-                           language === "fr" ? "Ajouter Rapidement des Symptômes" : "Quick Add Symptoms"}
-                        </p>
-                        <Badge variant="secondary" className="rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs">
-                          {language === "rw" ? "Kanda kugira wongere" : language === "fr" ? "Cliquez pour ajouter" : "Click to add"}
-                        </Badge>
-                      </div>
-                      
-                      {/* Enhanced Category Tabs */}
-                      <ScrollArea className="w-full">
-                        <div className={cn(
-                          "flex pb-2 min-w-max",
-                          isMobile ? "space-x-1" : "space-x-2"
-                        )}>
-                          {Object.entries(symptomCategories).map(([key, category]) => (
-                            <Button
-                              key={key}
-                              variant={activeCategory === key ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => setActiveCategory(key)}
-                              className={cn(
-                                "rounded-full whitespace-nowrap transition-all duration-200 text-xs",
-                                isMobile ? "h-7 px-2" : "h-7 px-2 sm:px-3",
-                                activeCategory === key 
-                                  ? "bg-primary text-primary-foreground shadow-sm" 
-                                  : "border-slate-300 bg-white/80 hover:bg-slate-100"
-                              )}
-                            >
-                              <span className={cn(
-                                "mr-1",
-                                isMobile ? "hidden" : "inline"
-                              )}>{category.icon}</span>
-                              <span className={cn(
-                                isMobile ? "text-xs" : "text-xs"
-                              )}>
-                                {isMobile ? category.name.split(' ')[0] : category.name.split(' ')[0]}
-                              </span>
-                            </Button>
-                          ))}
-                        </div>
-                      </ScrollArea>
-
-                      {/* Enhanced Symptoms Grid */}
-                      <div className={cn(
-                        "grid overflow-y-auto",
-                        isMobile ? 
-                          "grid-cols-2 gap-1 max-h-20" :
-                        isTablet ? 
-                          "grid-cols-3 gap-2 max-h-28 sm:max-h-32" :
-                          "grid-cols-3 gap-2 max-h-32 md:max-h-40"
-                      )}>
-                        {symptomCategories[activeCategory as keyof typeof symptomCategories].symptoms.map((symptom) => (
-                          <Badge
-                            key={symptom.name}
-                            variant="outline"
-                            className={cn(
-                              "cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-1 justify-center text-center rounded-full",
-                              isMobile ? 
-                                "px-1.5 py-1 text-xs" :
-                              isTablet ? 
-                                "px-2 py-1.5 text-xs" :
-                                "px-3 py-2 text-xs",
-                              symptom.isHighRisk
-                                ? "border-red-300 bg-red-50 text-red-700 hover:bg-red-100 hover:border-red-400 hover:text-red-800"
-                                : "border-slate-300 bg-white/80 hover:bg-primary hover:text-white hover:border-primary"
-                            )}
-                            onClick={() => addSymptom(symptom)}
-                          >
-                            <span className="text-xs">{symptom.icon}</span>
-                            <span className="truncate text-xs">{symptom.name}</span>
-                          </Badge>
-                        ))}
-                      </div>
-
-                      {activeCategory === "crisis" && (
-                        <div className={cn(
-                          "bg-red-50 border border-red-200 animate-pulse",
-                          isMobile ? "rounded-lg p-2" : 
-                          isTablet ? "rounded-xl p-2 sm:p-3" : 
-                          "rounded-2xl p-3"
-                        )}>
-                          <div className={cn(
-                            "flex items-center gap-1 text-red-800",
-                            isMobile ? "gap-1" : "gap-2"
-                          )}>
-                            <AlertCircle className={isMobile ? "h-3 w-3" : "h-4 w-4"} />
-                            <p className={cn(
-                              "font-semibold",
-                              isMobile ? "text-xs" : "text-xs"
-                            )}>
-                              {language === "rw" ? "Niba uri mu ngrorane, nyamuneka shaka ubufasha byihuse" :
-                               language === "fr" ? "Si vous êtes en crise, veuillez chercher une aide immédiate" : 
-                               "If you're in crisis, please seek immediate help"}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Enhanced Information Panel */}
+            {/* Symptoms Panel - Enhanced for mobile with better responsiveness */}
             <div className={cn(
-              "space-y-4 transition-all duration-300",
-              isMobileMenuOpen ? "block lg:block" : "hidden lg:block",
-              isMobile ? "space-y-3" : "sm:space-y-6"
+              isMobile && !isMobileMenuOpen ? "hidden" : "block",
+              isMobile ? "col-span-full" : "lg:col-span-1"
             )}>
               <Card className={cn(
-                "border-0 bg-gradient-to-br from-white to-blue-50/50 overflow-hidden",
+                "border-0 bg-white/80 backdrop-blur-sm overflow-hidden h-full",
                 isMobile ? "shadow-lg rounded-xl" :
-                isTablet ? "shadow-xl sm:rounded-2xl" :
-                "shadow-2xl md:rounded-3xl"
+                isTablet ? "shadow-xl rounded-2xl" :
+                "shadow-2xl rounded-3xl"
               )}>
                 <CardHeader className={cn(
-                  isMobile ? "pb-2" : "pb-3 sm:pb-4"
+                  "bg-gradient-to-r from-slate-50 to-slate-100/80 border-b border-slate-200/60",
+                  isMobile ? "py-3" : isTablet ? "py-4" : "py-5"
                 )}>
-                  <CardTitle className={cn(
-                    "flex items-center",
-                    isMobile ? "gap-2 text-base" : "gap-2 sm:gap-3 text-lg sm:text-xl"
-                  )}>
-                    <div className={cn(
-                      "bg-blue-100 rounded-xl",
-                      isMobile ? "p-1.5" : "p-1.5 sm:p-2"
-                    )}>
-                      <Info className={cn(
-                        "text-blue-600",
-                        isMobile ? "h-4 w-4" : "h-4 w-4 sm:h-5 sm:w-5"
-                      )} />
-                    </div>
-                    {language === "rw" ? "Uko Bikora" : language === "fr" ? "Comment Cela Fonctionne" : "How This Works"}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className={cn(
-                  "space-y-3",
-                  isMobile ? "space-y-2" : "sm:space-y-4"
-                )}>
-                  {[
-                    {
-                      icon: MessageCircle,
-                      title: language === "rw" ? "Ubufasha Buzuye" : language === "fr" ? "Soutien Holistique" : "Holistic Support",
-                      description: language === "rw" ? "Suzuma ibimenyetso by'umutima, ubwenge n'umubiri hamwe." :
-                               language === "fr" ? "Discutez des symptômes émotionnels, mentaux et physiques ensemble." : 
-                               "Discuss emotional, mental, and physical symptoms together."
-                    },
-                    {
-                      icon: HeartPulse,
-                      title: language === "rw" ? "Kumenya Ubuzima bw'Ubwenge" : language === "fr" ? "Conscient de la Santé Mentale" : "Mental Health Aware",
-                      description: language === "rw" ? "Yihariye mu buzima bw'umutima n'ibimenyetso by'ubwenge." :
-                               language === "fr" ? "Spécialisé dans le bien-être émotionnel et les symptômes de santé mentale." : 
-                               "Specialized in emotional wellbeing and mental health symptoms."
-                    },
-                    {
-                      icon: BrainIcon,
-                      title: language === "rw" ? "Ubwenge bwa AI" : language === "fr" ? "Conseils IA" : "AI-Powered Insights",
-                      description: language === "rw" ? "Habwa isesengura rifite impuhwe ku bikoresho byawe." :
-                               language === "fr" ? "Obtenez une analyse compatissante basée sur vos sentiments décrits." : 
-                               "Get compassionate analysis based on your described feelings."
-                    },
-                    {
-                      icon: Shield,
-                      title: language === "rw" ? "Ubufasha bw'Ingorane" : language === "fr" ? "Soutien de Crise" : "Crisis Support",
-                      description: language === "rw" ? "Ubuyobozi bwa mbere ku bihe by'ingorane." :
-                               language === "fr" ? "Conseils immédiats pour les situations d'urgence." : 
-                               "Immediate guidance for emergency situations."
-                    }
-                  ].map((item, index) => (
-                    <div key={index} className={cn(
-                      "flex items-start hover:bg-white/50 transition-all duration-200",
-                      isMobile ? "gap-2 p-2 rounded-lg" : 
-                      isTablet ? "gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg sm:rounded-xl" : 
-                      "gap-3 p-3 rounded-xl md:rounded-2xl"
-                    )}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 sm:gap-3">
                       <div className={cn(
-                        "bg-slate-100 rounded-lg flex-shrink-0",
-                        isMobile ? "p-1.5" : "p-1.5 sm:p-2"
+                        "bg-primary/10 rounded-lg",
+                        isMobile ? "p-1.5" : isTablet ? "p-2" : "p-2.5"
                       )}>
-                        <item.icon className={cn(
-                          "text-slate-600",
-                          isMobile ? "h-3 w-3" : "h-3 w-3 sm:h-4 sm:w-4"
+                        <Activity className={cn(
+                          "text-primary",
+                          isMobile ? "h-4 w-4" : isTablet ? "h-5 w-5" : "h-6 w-6"
                         )} />
                       </div>
                       <div>
-                        <h4 className={cn(
-                          "font-semibold text-slate-800",
-                          isMobile ? "text-sm" : "text-sm"
-                        )}>{item.title}</h4>
+                        <CardTitle className={cn(
+                          "font-bold text-slate-800",
+                          isMobile ? "text-base" : 
+                          isTablet ? "text-lg" : 
+                          "text-xl"
+                        )}>
+                          {language === "rw" ? "Ibimenyetso" : 
+                           language === "fr" ? "Symptômes" : "Symptoms"}
+                        </CardTitle>
                         <p className={cn(
                           "text-slate-600",
-                          isMobile ? "text-xs mt-0.5" : "text-xs mt-0.5"
-                        )}>{item.description}</p>
+                          isMobile ? "text-xs" : "text-sm"
+                        )}>
+                          {language === "rw" ? "Hitamo mu bimenyetso" :
+                           language === "fr" ? "Choisissez vos symptômes" : 
+                           "Choose your symptoms"}
+                        </p>
                       </div>
                     </div>
-                  ))}
-                </CardContent>
-              </Card>
-
-              {/* Enhanced Emergency Card */}
-              <Card className={cn(
-                "border-0 bg-gradient-to-br from-red-50 to-orange-50/50 overflow-hidden border-l-4 border-l-red-400",
-                isMobile ? "shadow-lg rounded-xl" :
-                isTablet ? "shadow-xl sm:rounded-2xl" :
-                "shadow-2xl md:rounded-3xl"
-              )}>
-                <CardHeader className={cn(
-                  isMobile ? "pb-2" : "pb-2 sm:pb-3"
-                )}>
-                  <CardTitle className={cn(
-                    "flex items-center text-red-800",
-                    isMobile ? "gap-2 text-base" : "gap-2 sm:gap-3 text-base sm:text-lg"
-                  )}>
-                    <AlertTriangle className={isMobile ? "h-4 w-4" : "h-4 w-4 sm:h-5 sm:w-5"} />
-                    {language === "rw" ? "Ubufasha bw'Ingorane" : language === "fr" ? "Soutien de Crise" : "Crisis Support"}
-                  </CardTitle>
+                    {/* Close button for mobile */}
+                    {isMobile && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="rounded-full h-8 w-8 p-0"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </CardHeader>
-                <CardContent>
-                  <p className={cn(
-                    "text-red-700",
-                    isMobile ? "text-xs mb-2" : "text-xs sm:text-sm mb-2 sm:mb-3"
+                
+                <CardContent className={cn(
+                  isMobile ? "p-3" : isTablet ? "p-4" : "p-5"
+                )}>
+                  {/* Category Tabs - Enhanced for mobile */}
+                  <ScrollArea className={cn(
+                    "mb-4",
+                    isMobile ? "max-w-full" : ""
                   )}>
-                    {language === "rw" ? "Niba ubonye bimwe mu bimenyetso by'ingorane:" :
-                     language === "fr" ? "Si vous éprouvez des symptômes de crise :" : 
-                     "If you're experiencing any crisis symptoms:"}
-                  </p>
-                  <ul className={cn(
-                    "text-red-600 space-y-1 mb-2",
-                    isMobile ? "text-xs space-y-1 mb-2" : "text-xs space-y-1 sm:space-y-2 mb-2 sm:mb-3"
-                  )}>
-                    <li className="flex items-start gap-1 sm:gap-2">
-                      <div className={cn(
-                        "bg-red-500 rounded-full flex-shrink-0 mt-1",
-                        isMobile ? "w-1 h-1 mt-1" : "w-1.5 h-1.5 mt-1.5"
-                      )}></div>
-                      {language === "rw" ? "Hamagara serivisi z'ingorane (911) byihuse" :
-                       language === "fr" ? "Appelez les services d'urgence (911) immédiatement" : 
-                       "Call emergency services (911) immediately"}
-                    </li>
-                    <li className="flex items-start gap-1 sm:gap-2">
-                      <div className={cn(
-                        "bg-red-500 rounded-full flex-shrink-0 mt-1",
-                        isMobile ? "w-1 h-1 mt-1" : "w-1.5 h-1.5 mt-1.5"
-                      )}></div>
-                      {language === "rw" ? "Umurongo wo gufasha mu ngrorane: Andika HOME kuri 741741" :
-                       language === "fr" ? "Ligne de crise par texto : Textez HOME au 741741" : 
-                       "Crisis Text Line: Text HOME to 741741"}
-                    </li>
-                    <li className="flex items-start gap-1 sm:gap-2">
-                      <div className={cn(
-                        "bg-red-500 rounded-full flex-shrink-0 mt-1",
-                        isMobile ? "w-1 h-1 mt-1" : "w-1.5 h-1.5 mt-1.5"
-                      )}></div>
-                      {language === "rw" ? "Umurongo wo kurinda abiyica: 988" :
-                       language === "fr" ? "Ligne nationale de prévention du suicide : 988" : 
-                       "National Suicide Prevention Lifeline: 988"}
-                    </li>
-                  </ul>
-                  <div className={cn(
-                    "bg-white/50 border border-red-200",
-                    isMobile ? "rounded-md p-1.5" : "rounded-md sm:rounded-lg p-1.5 sm:p-2"
-                  )}>
-                    <p className={cn(
-                      "text-red-700 text-center font-semibold",
-                      isMobile ? "text-xs" : "text-xs"
+                    <div className={cn(
+                      "flex space-x-1 pb-2",
+                      isMobile ? "min-w-max gap-1" : "flex-wrap gap-2"
                     )}>
-                      {language === "rw" ? "Nturi wenyine. Hari ubufasha buri gihe." :
-                       language === "fr" ? "Vous n'êtes pas seul. De l'aide est disponible 24h/24." : 
-                       "You are not alone. Help is available 24/7."}
-                    </p>
+                      {Object.entries(symptomCategories).map(([key, category]) => (
+                        <Button
+                          key={key}
+                          variant={activeCategory === key ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setActiveCategory(key)}
+                          className={cn(
+                            "rounded-full transition-all duration-200 whitespace-nowrap",
+                            isMobile ? "text-xs px-3 py-1 h-8" : "text-sm h-9"
+                          )}
+                        >
+                          <span className="mr-1">{category.icon}</span>
+                          {isMobile ? category.name.split(' ')[0] : 
+                           isTablet && category.name.length > 15 ? category.name.split(' ')[0] : category.name}
+                        </Button>
+                      ))}
+                    </div>
+                  </ScrollArea>
+
+                  {/* Symptoms Grid - Enhanced for mobile with better spacing */}
+                  <div className={cn(
+                    "grid gap-2",
+                    isMobile ? "grid-cols-2" : "grid-cols-2 lg:grid-cols-1 xl:grid-cols-2"
+                  )}>
+                    {symptomCategories[activeCategory as keyof typeof symptomCategories]?.symptoms.map((symptom, index) => (
+                      <Button
+                        key={index}
+                        variant="outline"
+                        onClick={() => addSymptom(symptom)}
+                        className={cn(
+                          "h-auto py-3 px-2 border-slate-200 hover:border-primary hover:bg-primary/5 transition-all duration-200 text-left flex flex-col items-center justify-center gap-2 relative",
+                          isMobile ? "min-h-[80px]" : "min-h-[90px]",
+                          symptom.isHighRisk ? "border-red-200 bg-red-50 hover:border-red-300 hover:bg-red-100" : ""
+                        )}
+                      >
+                        <span className={cn(
+                          symptom.isHighRisk ? "text-2xl" : "text-xl"
+                        )}>
+                          {symptom.icon}
+                        </span>
+                        <span className={cn(
+                          "font-medium leading-tight text-center",
+                          isMobile ? "text-xs" : "text-sm",
+                          symptom.isHighRisk ? "text-red-700 font-bold" : "text-slate-700"
+                        )}>
+                          {symptom.name}
+                        </span>
+                        {symptom.isHighRisk && (
+                          <AlertTriangle className={cn(
+                            "text-red-500 absolute top-1 right-1",
+                            isMobile ? "h-3 w-3" : "h-4 w-4"
+                          )} />
+                        )}
+                      </Button>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Enhanced Stats Card */}
-              {conversation.length > 0 && (
-                <Card className={cn(
-                  "border-0 bg-gradient-to-br from-slate-50 to-slate-100/50 overflow-hidden",
-                  isMobile ? "shadow-lg rounded-xl" :
-                  isTablet ? "shadow-xl sm:rounded-2xl" :
-                  "shadow-xl md:rounded-3xl"
-                )}>
-                  <CardHeader className={cn(
-                    isMobile ? "pb-2" : "pb-2 sm:pb-3"
-                  )}>
-                    <CardTitle className={cn(
-                      "flex items-center",
-                      isMobile ? "gap-1 text-base" : "gap-1 sm:gap-2 text-base sm:text-lg"
-                    )}>
-                      <Activity className={isMobile ? "h-4 w-4" : "h-4 w-4 sm:h-5 sm:w-5 text-slate-600"} />
-                      {language === "rw" ? "Imibare y'Ikiganiro" : language === "fr" ? "Statistiques de Conversation" : "Conversation Stats"}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className={cn(
-                      "grid text-center",
-                      isMobile ? "grid-cols-2 gap-2" : "grid-cols-2 gap-2 sm:gap-3"
-                    )}>
-                      <div className={cn(
-                        "bg-white rounded-lg shadow-sm",
-                        isMobile ? "p-2" : "p-2 sm:p-3"
-                      )}>
-                        <div className={cn(
-                          "font-bold text-slate-800",
-                          isMobile ? "text-lg" : "text-lg sm:text-xl md:text-2xl"
-                        )}>{conversation.length}</div>
-                        <div className="text-xs text-slate-600">
-                          {language === "rw" ? "Ubutumwa Bwose" : language === "fr" ? "Messages Totaux" : "Total Messages"}
-                        </div>
-                      </div>
-                      <div className={cn(
-                        "bg-white rounded-lg shadow-sm",
-                        isMobile ? "p-2" : "p-2 sm:p-3"
-                      )}>
-                        <div className={cn(
-                          "font-bold text-slate-800",
-                          isMobile ? "text-lg" : "text-lg sm:text-xl md:text-2xl"
-                        )}>
-                          {conversation.filter(msg => msg.type === 'user').length}
-                        </div>
-                        <div className="text-xs text-slate-600">
-                          {language === "rw" ? "Ibyo Wanditse" : language === "fr" ? "Vos Entrées" : "Your Inputs"}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </div>
-
-          {/* Enhanced Footer */}
-          <div className={cn(
-            "text-center",
-            isMobile ? "mt-6" : isTablet ? "mt-8" : "mt-10 lg:mt-12"
-          )}>
-            <div className={cn(
-              "inline-flex items-center bg-white/80 backdrop-blur-sm shadow-lg border border-slate-200/60 max-w-full mx-2",
-              isMobile ? "gap-2 px-3 py-2 rounded-lg" :
-              isTablet ? "gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-xl" :
-              "gap-3 px-4 md:px-6 py-3 md:py-4 rounded-2xl"
-            )}>
-              <Shield className={cn(
-                "text-slate-600 flex-shrink-0",
-                isMobile ? "h-3 w-3" : "h-4 w-4 md:h-5 md:w-5"
-              )} />
-              <p className={cn(
-                "text-slate-700 text-left",
-                isMobile ? "text-xs" : "text-xs"
-              )}>
-                <span className="font-semibold">
-                  {language === "rw" ? "Gikurikira:" : language === "fr" ? "Important :" : "Important:"}
-                </span>{" "}
-                {language === "rw" 
-                  ? "Uyu mufasha wa AI utanga ubumenyi gusa. Buri gihe suzuma n'abakozi b'ubuzima ku ngrorane z'ubuzima n'ubwenge." 
-                  : language === "fr" 
-                  ? "Cet assistant IA fournit uniquement des conseils éducatifs. Consultez toujours des professionnels de santé pour les urgences médicales et de santé mentale." 
-                  : "This AI assistant provides educational insights only. Always consult healthcare professionals for medical and mental health emergencies."}
-              </p>
             </div>
           </div>
         </div>
